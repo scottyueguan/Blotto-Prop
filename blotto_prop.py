@@ -21,6 +21,8 @@ class BlottoProp:
 
         self.o, self.A, self.A_pseudo_inv = self._init_coordinate_transferer()
 
+        # print initial point
+
     # def prop_T(self): # propogate the whole T steps
     #     self.plot_feasible_region(self.vertex_flow[0], 0)
     #
@@ -34,18 +36,30 @@ class BlottoProp:
     #
     #         self.plot_feasible_region(new_vertices, t + 1)
 
-    def prop_step(self):  # propogate one step
+    def __len__(self):
+        return len(self.vertex_flow)
+
+    def append_flow(self, vertices: Vertices):
+        self.vertex_flow.append(vertices)
+
+    def override_flow(self, vertices: Vertices):
+        self.vertex_flow[-1] = vertices
+
+    def revert_step(self):
+        self.vertex_flow.pop()
+
+    def prop_step(self):  # propagate one step
         new_vertices = []
         for x in self.vertex_flow[-1].vertices:
             new_vertices += self._prop_vertex(x)
 
         new_vertices, connection = self._remove_non_vertex(new_vertices)
-        self.vertex_flow.append(Vertices(new_vertices, connection))
-        return new_vertices
+        # self.vertex_flow.append(Vertices(new_vertices, connection))
+        return Vertices(new_vertices, connection)
 
-    def cut(self, cut_vertices):
+    def cut(self, vertices, cut_vertices):
 
-        current_vertices = self.vertex_flow[-1]
+        current_vertices = vertices
 
         cut_vertices_rotate = self._rotate_points(cut_vertices.vertices)
         current_vertices_rotate = self._rotate_points(current_vertices.vertices)
@@ -64,15 +78,15 @@ class BlottoProp:
 
         new_points_tmp = p_new.exterior.coords.xy
         new_points_rotated = [np.array([new_points_tmp[0][i], new_points_tmp[1][i]]) for i in
-                                range(len(new_points_tmp[0]) - 1)]
+                              range(len(new_points_tmp[0]) - 1)]
         new_points = self._rotate_back_points(new_points_rotated)
         new_connections = self._gen_standard_connection(len(new_points))
 
-        self.vertex_flow[-1] = Vertices(new_points, new_connections)
+        # self.vertex_flow[-1] = Vertices(new_points, new_connections)
 
         return Vertices(new_points, new_connections)
 
-    def x_req_2_simplex(self, x_req):
+    def req_2_simplex(self, x_req):
         assert sum(x_req) < 1
         cut_points = []
 
@@ -161,7 +175,7 @@ class BlottoProp:
 
     def plot_simplex(self, t):
 
-        plt.figure(figsize=(8,6), dpi=80)
+        plt.figure(figsize=(8, 6), dpi=120)
 
         ax = plt.axes(projection='3d')
         ax.view_init(azim=50, elev=45)

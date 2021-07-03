@@ -9,3 +9,18 @@ ConvexHull does not handle degeneracy, and we have to project the polygon to N-1
 
 (2) The intersection is handled using shapely Polygon, which only handle 2D geometries.
 
+
+## Winning condition for Attacker
+Let x_t and y_t be the distribution for the Defender and the Attacker.
+The Attacker wins if it overwhelm the defender at one location. Formally,  [y_t]_i >= [x_t]_i at some time step t and at some node i.
+
+
+## Constraints on Attacker's action
+Aside from the underlying graph constraints, we enforce additional restrictions on Attacker's actions.
+* Given Defender's allocation x_t, the attacker must maintain at least eta * [x_t]_i
+ at node i. This is implemented in ```utils.compute_y_req_v1```.
+
+* Given Defender's allocation x_t, the attacker must maintain at least eta fraction of its resource at node i. 
+  This is implemented in ```utils.compute_y_req_v2```.
+  
+Change the code in ```main.py``` to select different restriction on Attacker.
