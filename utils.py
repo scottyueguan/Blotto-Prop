@@ -16,7 +16,7 @@ class Vertices:
         ydata = [vertices[i][1] for i in range(len(vertices))]
         zdata = [vertices[i][2] for i in range(len(vertices))]
 
-        ax.scatter3D(xdata, ydata, zdata, color=color)
+        ax.scatter3D(xdata, ydata, zdata, color=color, label='{} vertices'.format(legend), s=40)
 
         if self.connections is not None:
             for i, connection in enumerate(self.connections):
@@ -31,7 +31,7 @@ class Vertices:
                 else:
                     ax.plot3D(xline, yline, zline, color + "-")
 
-        ax.legend(loc='lower center')
+        ax.legend(loc='lower center', fontsize=18)
 
         return ax
 

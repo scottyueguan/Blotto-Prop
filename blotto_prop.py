@@ -5,14 +5,15 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d
 from operator import itemgetter
 from shapely.geometry import Polygon
 from copy import deepcopy
-from utils import Vertices
+from utils import Vertices, isEqual
 
 
 class BlottoProp:
-    def __init__(self, connectivity, x0, T, agent_name):
+    def __init__(self, connectivity, x0, agent_name, T=50, eps=0, hull_method="aux_point"):
         self.connectivity = connectivity
         self.N = len(self.connectivity)
         self.x0 = x0
+        self.X = sum(x0)
         self.T = T
         self.agent_name = agent_name
 
@@ -20,6 +21,8 @@ class BlottoProp:
         self.extreme_actions = self.generate_extreme_actions()
 
         self.o, self.A, self.A_pseudo_inv = self._init_coordinate_transferer()
+        self.eps = eps
+        self.hull_method = hull_method
 
         # print initial point
 
@@ -52,9 +55,11 @@ class BlottoProp:
         new_vertices = []
         for x in self.vertex_flow[-1].vertices:
             new_vertices += self._prop_vertex(x)
+        if self.hull_method == "aux_point":
+            new_vertices, connection = self._remove_non_vertex_auxPoint(new_vertices)
+        else:
+            new_vertices, connection = self._remove_non_vertex_analytic(new_vertices)
 
-        new_vertices, connection = self._remove_non_vertex(new_vertices)
-        # self.vertex_flow.append(Vertices(new_vertices, connection))
         return Vertices(new_vertices, connection)
 
     def cut(self, vertices, cut_vertices):
@@ -114,15 +119,51 @@ class BlottoProp:
             new_vertices.append(np.matmul(x, extreme_actions))
         return new_vertices
 
-    def _remove_non_vertex(self, vertices):
+    def _remove_non_vertex_auxPoint(self, vertices):
+        vertices_addApoint, aux_point = self._add_point(vertices)
+        new_vertices, connections = self._convex_hull(vertices_addApoint)
+        final_vertices, final_connections = self._remove_aux_point(new_vertices, connections, aux_point)
+        return final_vertices, final_connections
+
+    def _remove_non_vertex_analytic(self, vertices):
         rotated_vertices = self._rotate_points(vertices)
-        hull = ConvexHull(rotated_vertices)
+        new_vertices, connections = self._convex_hull(rotated_vertices)
+        final_vertices = self._rotate_back_points(new_vertices)
+        return final_vertices, connections
+
+    def _convex_hull(self, points):
+        hull = ConvexHull(points)
         vertex_index = hull.vertices
-        new_vertices = list(itemgetter(*vertex_index)(vertices))
+        new_vertices = list(itemgetter(*vertex_index)(points))
         connections = [
             np.concatenate((np.where(vertex_index == simplex[0])[0], np.where(vertex_index == simplex[1])[0])) for
             simplex in hull.simplices]
         return new_vertices, connections
+
+    def _add_point(self, points):
+        aux_point = np.zeros(self.x0.shape) + self.X
+        points.append(aux_point)
+        return points, aux_point
+
+    def _remove_aux_point(self, points, connections, aux_point):
+        for index, point in enumerate(points):
+            if all(abs(point - aux_point) < 1e-5):
+                target = index
+                break
+        points.pop(target)
+
+        remove_index = []
+        for index, connection in enumerate(connections):
+            if connection[0] == target or connection[1] == target:
+                remove_index.append(index)
+            if connection[0] > target:
+                connection[0] -= 1
+            if connection[1] > target:
+                connection[1] -= 1
+        for index in remove_index:
+            connections.pop(index)
+
+        return points, connections
 
     def _rotate_points(self, points):
         o = self.o
@@ -173,39 +214,41 @@ class BlottoProp:
 
         return list
 
-    def plot_simplex(self, t):
+    def plot_simplex(self, t, color='b'):
 
-        plt.figure(figsize=(8, 6), dpi=120)
+        r = self.X
+
+        plt.figure(figsize=(6, 6), dpi=120)
 
         ax = plt.axes(projection='3d')
         ax.view_init(azim=50, elev=45)
 
-        xline = np.linspace(0, 1, 20)
-        yline = 1 - xline
+        xline = np.linspace(0, r, 20)
+        yline = r - xline
         zline = np.linspace(0, 0, 20)
-        ax.plot3D(xline, yline, zline, 'b-', label="simplex")
+        ax.plot3D(xline, yline, zline, color + '-', label="simplex")
 
         xline = np.linspace(0, 0, 20)
-        yline = np.linspace(0, 1, 20)
-        zline = 1 - yline
+        yline = np.linspace(0, r, 20)
+        zline = r - yline
         ax.plot3D(xline, yline, zline, 'b-')
 
-        xline = np.linspace(0, 1, 20)
+        xline = np.linspace(0, r, 20)
         yline = np.linspace(0, 0, 20)
-        zline = 1 - xline
+        zline = r - xline
         ax.plot3D(xline, yline, zline, 'b-')
 
-        ax.set_xlim3d(0, 1.1)
-        ax.set_ylim3d(0, 1.1)
-        ax.set_zlim3d(0, 1.1)
+        ax.set_xlim3d(0, r + 0.1)
+        ax.set_ylim3d(0, r + 0.1)
+        ax.set_zlim3d(0, r + 0.1)
 
-        plt.title("Agent {} feasible region at time {}".format(self.agent_name, t))
+        plt.title("Agent {} feasible region at time {}".format(self.agent_name, t), fontsize=20)
 
         return ax
 
     def _init_coordinate_transferer(self):
         o = np.zeros(self.N)
-        o[0] = 1
+        o[0] = self.X
 
         A = np.zeros((self.N, self.N - 1))
         for i in range(1, self.N):
