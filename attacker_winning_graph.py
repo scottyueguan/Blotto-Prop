@@ -7,12 +7,27 @@ from convex_hull_algs import isInHull
 from utils import generate_x_req_set
 
 
-def check_attacker_winning_graph(env: Environment, n_samples=10):
-    def sample(x_dim, X):
+def check_attacker_winning_graph(env: Environment, sampling_method="random", n_samples=10, resolution=None):
+    def random_sample(x_dim, X):
         x_sample = np.random.random(x_dim)
         x_sample *= X / sum(x_sample)
         assert abs(sum(x_sample) - X) < 1e-4
         return x_sample
+
+    def generate_mesh(resolution, X, x_dim):
+        mesh = [[]]
+        for dim in range(x_dim-1):
+            while len(mesh[0]) < dim + 1:
+                node = mesh.pop(0)
+                X_remain = X - sum(node)
+                children = np.linspace(0, X_remain, int(X_remain / resolution) + 1)
+                for child in children:
+                    new_node = deepcopy(node)
+                    new_node.append(child)
+                    mesh.append(new_node)
+        for point in mesh:
+            point.append(X - sum(point))
+        return mesh
 
     # def get_single_point_safe_vertices(X, y):
     #     y_dim = y.shape[0]
@@ -32,11 +47,20 @@ def check_attacker_winning_graph(env: Environment, n_samples=10):
     y_dim = env.get_dimension()
     Y = env.Y
 
-    y_sample_pairs = []
-    for _ in range(n_samples):
-        y0 = sample(y_dim, Y)
-        y1 = sample(y_dim, Y)
-        y_sample_pairs.append([y0, y1])
+    if sampling_method == "random":
+        y_sample_pairs = []
+        for _ in range(n_samples):
+            y0 = random_sample(y_dim, Y)
+            y1 = random_sample(y_dim, Y)
+            y_sample_pairs.append([y0, y1])
+
+    elif sampling_method == "mesh":
+        y_sample_pairs = []
+        mesh0 = generate_mesh(resolution=resolution, X=Y, x_dim=y_dim)
+        mesh1 = deepcopy(mesh0)
+        for y0 in mesh0:
+            for y1 in mesh1:
+                y_sample_pairs.append([np.array(y0), np.array(y1)])
 
     # To test figure 4 scenario
     y_sample_pairs.append([np.array([0.9, 0.1, 0.0, 0.0, 0.0]), np.array([0.1, 0.9, 0.0, 0.0, 0.0])])
@@ -80,9 +104,9 @@ def check_attacker_winning_graph(env: Environment, n_samples=10):
     print("No solution found!")
     return None
 
+
 if __name__ == "__main__":
     env_name = "figure-4"
     env = generate_env_from_name(env_name)
 
-    soln = check_attacker_winning_graph(env=env, n_samples=100)
-
+    soln = check_attacker_winning_graph(env=env, n_samples=0, sampling_method="mesh", resolution=0.5)
