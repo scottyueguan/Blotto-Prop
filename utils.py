@@ -1,5 +1,6 @@
 import numpy as np
 from operator import itemgetter
+from copy import deepcopy
 
 
 class Vertices:
@@ -49,6 +50,16 @@ def compare_vertices(vertices1: Vertices, vertices2: Vertices):
         return False
 
 
+def gen_standard_connection(n):
+    connections = []
+    for i in range(n):
+        if i + 1 <= n - 1:
+            connections.append([i, i + 1])
+        else:
+            connections.append([i, 0])
+    return connections
+
+
 def compute_x_req(vertices_y: Vertices):
     N = len(vertices_y.vertices[0])
     x_req = np.zeros(N)
@@ -56,6 +67,27 @@ def compute_x_req(vertices_y: Vertices):
         vertices_y_i = [vertices_y.vertices[k][i] for k in range(len(vertices_y))]
         x_req[i] = max(vertices_y_i)
     return x_req
+
+
+def req_2_simplex(x_req, X):
+    assert sum(x_req) < X
+    cut_points = []
+    x_dim = x_req.shape[0]
+
+    for i in range(x_dim):
+        cut_vertex = deepcopy(x_req)
+        cut_vertex[i] = X - sum(x_req) + x_req[i]  # cut_vertex = 1 - sum_{k!=i} x_req[i]
+        cut_points.append(cut_vertex)
+
+    connections = gen_standard_connection(x_dim)
+
+    return Vertices(cut_points, connections)
+
+
+def generate_x_req_set(vertices_y: Vertices, X):
+    x_req = compute_x_req(vertices_y)
+    x_req_vertices = req_2_simplex(x_req, X)
+    return x_req_vertices
 
 
 def compute_y_req_v1(vertices_x: Vertices, eta=0.2):

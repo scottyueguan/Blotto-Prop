@@ -11,23 +11,27 @@ from convex_hull_algs import remove_non_vertex_auxPoint, remove_non_vertex_analy
 
 
 class BlottoProp:
-    def __init__(self, connectivity, x0, agent_name, T=50, eps=0, hull_method="aux_point", need_connections=False, perturb_singleton=True):
+    def __init__(self, connectivity, agent_name, T=50, eps=0, hull_method="aux_point", need_connections=False):
         self.connectivity = connectivity
         self.N = len(self.connectivity)
-        self.x0 = x0
-        self.X = sum(x0)
+        self.X = None
         self.T = T
         self.agent_name = agent_name
 
-        self.vertex_flow = self._generate_initial_vertex(points =[x0], perturb_singleton=perturb_singleton)
+        self.vertex_flow = None
         self.extreme_actions = self.generate_extreme_actions()
 
-        self.rotation_parameters = self._init_coordinate_transferer()
+        self.rotation_parameters = None
         self.eps = eps
         self.hull_method = hull_method
         self.need_connections = need_connections
 
-        # print initial point
+    def set_initial_vertices(self, initial_vertices, perturb_singleton=True):
+        self.X = sum(initial_vertices[0])
+        self.vertex_flow = self._generate_initial_vertex(points=initial_vertices, perturb_singleton=perturb_singleton)
+
+        self.rotation_parameters = self._init_coordinate_transferer()
+
 
     # def prop_T(self): # propogate the whole T steps
     #     self.plot_feasible_region(self.vertex_flow[0], 0)
@@ -70,6 +74,9 @@ class BlottoProp:
     def override_flow(self, vertices: Vertices):
         self.vertex_flow[-1] = vertices
 
+    def reset_flow(self):
+        self.vertex_flow = None
+
     def revert_step(self):
         self.vertex_flow.pop()
 
@@ -85,6 +92,12 @@ class BlottoProp:
                 remove_non_vertex_analytic(new_vertices, need_connections=self.need_connections)
 
         return Vertices(new_vertices, connection)
+
+    def prop_multi_steps(self, t):
+        for _ in range(t):
+            new_vertices = self.prop_step()
+            self.append_flow(new_vertices)
+        return self.vertex_flow[-1]
 
     def cut(self, vertices, cut_vertices):
 
@@ -140,7 +153,6 @@ class BlottoProp:
     def _prop_vertex(self, x):
         new_vertices = []
         for extreme_actions in self.extreme_actions:
-            assert abs(sum(np.matmul(x, extreme_actions)) - 1) < 1e-4
             new_vertices.append(np.matmul(x, extreme_actions))
         return new_vertices
 
