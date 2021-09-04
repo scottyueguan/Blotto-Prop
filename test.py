@@ -1,7 +1,10 @@
-from scipy.spatial import ConvexHull
+from convex_hull_algs import isInHull
+import numpy as np
 
-points = [[0, 1], [1, 0], [0.5, 0.5], [1, 1]]
+points = [np.array([0, 1]), np.array([1, 0]), np.array([0.5, 0.5]), np.array([1, 1])]
 
-hull = ConvexHull(points)
+point = np.array([0.3, 0.7])
 
-print('done')
+result = isInHull(point, points)
+
+print(result)

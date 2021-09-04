@@ -6,10 +6,12 @@ from operator import itemgetter
 from shapely.geometry import Polygon
 from copy import deepcopy
 from utils import Vertices, isEqual
+import itertools
+from convex_hull_algs import remove_non_vertex_auxPoint, remove_non_vertex_analytic
 
 
 class BlottoProp:
-    def __init__(self, connectivity, x0, agent_name, T=50, eps=0, hull_method="aux_point"):
+    def __init__(self, connectivity, x0, agent_name, T=50, eps=0, hull_method="aux_point", need_connections=False, perturb_singleton=True):
         self.connectivity = connectivity
         self.N = len(self.connectivity)
         self.x0 = x0
@@ -17,12 +19,13 @@ class BlottoProp:
         self.T = T
         self.agent_name = agent_name
 
-        self.vertex_flow = [Vertices([self.x0], None)]
+        self.vertex_flow = self._generate_initial_vertex(points =[x0], perturb_singleton=perturb_singleton)
         self.extreme_actions = self.generate_extreme_actions()
 
-        self.o, self.A, self.A_pseudo_inv = self._init_coordinate_transferer()
+        self.rotation_parameters = self._init_coordinate_transferer()
         self.eps = eps
         self.hull_method = hull_method
+        self.need_connections = need_connections
 
         # print initial point
 
@@ -42,6 +45,25 @@ class BlottoProp:
     def __len__(self):
         return len(self.vertex_flow)
 
+    def _generate_initial_vertex(self, points, perturb_singleton=True):
+        if len(points)>1:
+            return [Vertices(points, None)]
+
+        x0 = points[0]
+        X = sum(x0)
+        if not perturb_singleton:
+            return [Vertices([x0], None)]
+        else:
+            perturbed_points = []
+            for i in range(len(x0)):
+                new_point = deepcopy(x0)
+                new_point[i] += 1e-3
+                new_point *= (X/sum(new_point))
+                perturbed_points.append(new_point)
+            return [Vertices(perturbed_points, None)]
+
+
+
     def append_flow(self, vertices: Vertices):
         self.vertex_flow.append(vertices)
 
@@ -56,9 +78,11 @@ class BlottoProp:
         for x in self.vertex_flow[-1].vertices:
             new_vertices += self._prop_vertex(x)
         if self.hull_method == "aux_point":
-            new_vertices, connection = self._remove_non_vertex_auxPoint(new_vertices)
+            new_vertices, connection = \
+                remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
         else:
-            new_vertices, connection = self._remove_non_vertex_analytic(new_vertices)
+            new_vertices, connection = \
+                remove_non_vertex_analytic(new_vertices, need_connections=self.need_connections)
 
         return Vertices(new_vertices, connection)
 
@@ -116,77 +140,9 @@ class BlottoProp:
     def _prop_vertex(self, x):
         new_vertices = []
         for extreme_actions in self.extreme_actions:
+            assert abs(sum(np.matmul(x, extreme_actions)) - 1) < 1e-4
             new_vertices.append(np.matmul(x, extreme_actions))
         return new_vertices
-
-    def _remove_non_vertex_auxPoint(self, vertices):
-        vertices_addApoint, aux_point = self._add_point(vertices)
-        new_vertices, connections = self._convex_hull(vertices_addApoint)
-        final_vertices, final_connections = self._remove_aux_point(new_vertices, connections, aux_point)
-        return final_vertices, final_connections
-
-    def _remove_non_vertex_analytic(self, vertices):
-        rotated_vertices = self._rotate_points(vertices)
-        new_vertices, connections = self._convex_hull(rotated_vertices)
-        final_vertices = self._rotate_back_points(new_vertices)
-        return final_vertices, connections
-
-    def _convex_hull(self, points):
-        hull = ConvexHull(points)
-        vertex_index = hull.vertices
-        new_vertices = list(itemgetter(*vertex_index)(points))
-        connections = [
-            np.concatenate((np.where(vertex_index == simplex[0])[0], np.where(vertex_index == simplex[1])[0])) for
-            simplex in hull.simplices]
-        return new_vertices, connections
-
-    def _add_point(self, points):
-        aux_point = np.zeros(self.x0.shape) + self.X
-        points.append(aux_point)
-        return points, aux_point
-
-    def _remove_aux_point(self, points, connections, aux_point):
-        for index, point in enumerate(points):
-            if all(abs(point - aux_point) < 1e-5):
-                target = index
-                break
-        points.pop(target)
-
-        remove_index = []
-        for index, connection in enumerate(connections):
-            if connection[0] == target or connection[1] == target:
-                remove_index.append(index)
-            if connection[0] > target:
-                connection[0] -= 1
-            if connection[1] > target:
-                connection[1] -= 1
-        for index in remove_index:
-            connections.pop(index)
-
-        return points, connections
-
-    def _rotate_points(self, points):
-        o = self.o
-        A_pseudo_inv = self.A_pseudo_inv
-
-        rotated_points = []
-        for point in points:
-            diff = point - o
-            rotated_point = np.matmul(A_pseudo_inv, diff.T)
-            rotated_points.append(rotated_point.T)
-
-        return rotated_points
-
-    def _rotate_back_points(self, rotated_points):
-        o = self.o
-        A = self.A
-
-        original_points = []
-        for rotated_point in rotated_points:
-            diff = np.matmul(A, rotated_point.T).T
-            point = o + diff
-            original_points.append(point)
-        return original_points
 
     def generate_extreme_actions(self):
         return self._expand(0, list=[np.array([])])
@@ -257,4 +213,6 @@ class BlottoProp:
 
         A_pseudo_inv = np.linalg.pinv(A)
 
-        return o, A, A_pseudo_inv
+        rotation_parameters = {"o": o, "A_pseudo_inv": A_pseudo_inv, "A": A}
+
+        return rotation_parameters

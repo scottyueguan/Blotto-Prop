@@ -12,7 +12,8 @@ T = 5  # Terminal time
 Connectivity = np.array([[1, 1, 0], [0, 1, 1], [1, 0, 1]])
 N = len(Connectivity)
 
-prop_X = BlottoProp(connectivity=Connectivity, x0=x_0, T=T, agent_name="Defender", hull_method='aux_point')
+prop_X = BlottoProp(connectivity=Connectivity, x0=x_0, T=T, agent_name="Defender", hull_method='aux_point',
+                    need_connections=False)
 prop_Y = BlottoProp(connectivity=Connectivity, x0=y_0, T=T, agent_name="Attacker")
 
 # plot agents' initial distributions
@@ -22,7 +23,6 @@ ax_Y = prop_Y.vertex_flow[-1].plot(ax_Y, color='m', legend='Attacker')
 ax_X = prop_X.plot_simplex(t=0)
 ax_X = prop_X.vertex_flow[-1].plot(ax_X, color='m', legend='Defender')
 
-
 for t in range(1, T + 1):
 
     # propogate feasible region
@@ -30,6 +30,7 @@ for t in range(1, T + 1):
 
     y_vertices = prop_Y.prop_step()
 
+    ax_X = prop_X.plot_simplex(t=0)
     ax_X = x_vertices.plot(ax_X, color='m', legend='Defender')
     plt.show()
 
@@ -86,6 +87,3 @@ for t in range(1, T + 1):
     plt.show()
 
     print("Time step {} finished!".format(t))
-
-
-
