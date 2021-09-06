@@ -32,7 +32,6 @@ class BlottoProp:
 
         self.rotation_parameters = self._init_coordinate_transferer()
 
-
     # def prop_T(self): # propogate the whole T steps
     #     self.plot_feasible_region(self.vertex_flow[0], 0)
     #
@@ -50,7 +49,7 @@ class BlottoProp:
         return len(self.vertex_flow)
 
     def _generate_initial_vertex(self, points, perturb_singleton=True):
-        if len(points)>1:
+        if len(points) > 1:
             return [Vertices(points, None)]
 
         x0 = points[0]
@@ -62,11 +61,9 @@ class BlottoProp:
             for i in range(len(x0)):
                 new_point = deepcopy(x0)
                 new_point[i] += 1e-3
-                new_point *= (X/sum(new_point))
+                new_point *= (X / sum(new_point))
                 perturbed_points.append(new_point)
             return [Vertices(perturbed_points, None)]
-
-
 
     def append_flow(self, vertices: Vertices):
         self.vertex_flow.append(vertices)
@@ -85,13 +82,11 @@ class BlottoProp:
         for x in self.vertex_flow[-1].vertices:
             new_vertices += self._prop_vertex(x)
         if self.hull_method == "aux_point":
-            new_vertices, connection = \
-                remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
+            new_vertices = remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
         else:
-            new_vertices, connection = \
-                remove_non_vertex_analytic(new_vertices, need_connections=self.need_connections)
+            new_vertices = remove_non_vertex_analytic(new_vertices, need_connections=self.need_connections)
 
-        return Vertices(new_vertices, connection)
+        return new_vertices
 
     def prop_multi_steps(self, t):
         for _ in range(t):

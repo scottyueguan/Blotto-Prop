@@ -7,8 +7,6 @@ from utils import isEqual
 
 
 def compute_C2C_time(env: Environment, x_s, x_g, role):
-
-
     if role == "X":
         prop = BlottoProp(connectivity=env.connectivity_X, T=env.Tf, agent_name="Defender",
                           hull_method="aux_point",
@@ -21,6 +19,8 @@ def compute_C2C_time(env: Environment, x_s, x_g, role):
         total_resource = env.Y
     else:
         raise Exception("Role str error!")
+
+    assert isEqual(sum(x_s), total_resource) and isEqual(sum(x_g), total_resource)
 
     assert isEqual(sum(x_s), total_resource) and isEqual(sum(x_g), total_resource)
 
@@ -42,8 +42,8 @@ if __name__ == "__main__":
     env_name = "figure-4"
     env = generate_env_from_name(env_name)
 
-    x_s = np.array([1.0, 1.0, 0.0, 0.0, 1.5])
-    x_g = np.array([0.0, 1.0, 1.0, 1.5, 0.0])
+    x_s = np.array([1.0, 1.0, 0.0, 0.0, 1.01])
+    x_g = np.array([0.0, 1.0, 1.0, 1.01, 0.0])
 
     tau = compute_C2C_time(env=env, x_s=x_s, x_g=x_g, role="X")
 

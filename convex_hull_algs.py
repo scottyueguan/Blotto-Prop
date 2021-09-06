@@ -2,9 +2,37 @@ import numpy as np
 from scipy.spatial import ConvexHull
 from operator import itemgetter
 import itertools
+import cdd
+from utils import isSingleton_eps, Vertices
 
 
-def convex_hull(points, aux_indices=None, need_connections=False):
+def con2vert(A, b):
+    b = np.reshape(b, (len(b), 1))
+    concated_matrix = np.append(b, -A, axis=1)
+
+    mat = cdd.Matrix(concated_matrix, number_type='float')
+    mat.rep_type = cdd.RepType.INEQUALITY
+    poly = cdd.Polyhedron(mat)
+    ext = poly.get_generators()
+
+    vertices = []
+    rays = []
+
+    if len(ext) == 0:
+        vertices, rays, found = None, None, False
+        return vertices, rays, found
+
+    found = True
+    for i in range(len(ext)):
+        element = ext[i]
+        if element[0] == 1:
+            vertices.append(np.array(element[1:]))
+        else:
+            rays.append(np.array(element[1:]))
+    return Vertices(vertices=vertices), rays, found
+
+
+def convex_hull(points, aux_indices=None, need_connections=False, need_equations=False):
     def generate_connections(hull, aux_indices=None):
         def generate_connections_from_simplex(simplex):
             connections = list(itertools.combinations(simplex, 2))
@@ -54,14 +82,22 @@ def convex_hull(points, aux_indices=None, need_connections=False):
     vertex_index = set(hull.vertices) - set(aux_indices)
     new_vertices = list(itemgetter(*vertex_index)(points))
 
+    connections, equations = None, None
+
     if need_connections:
         connections = generate_connections(hull, aux_indices=aux_indices)
-    else:
-        connections = None
-    return new_vertices, connections
+
+    if need_equations:
+        A = hull.equations[:, :-1]
+        b = hull.equations[:, -1]
+        equations = {"A": A, 'b': b}
+
+    hull_vertices = Vertices(vertices=new_vertices, connections=connections, equations=equations)
+
+    return hull_vertices
 
 
-def remove_non_vertex_auxPoint(vertices, need_connections):
+def remove_non_vertex_auxPoint(vertices, need_connections=False, need_equations=False):
     def add_aux_point(points):
         example = vertices[0]
         aux_point = np.zeros(example.shape) + sum(example)
@@ -71,12 +107,30 @@ def remove_non_vertex_auxPoint(vertices, need_connections):
         return points, aux_points, aux_indices
 
     vertices_addApoint, aux_points, aux_indices = add_aux_point(vertices)
-    new_vertices, new_connections = convex_hull(vertices_addApoint, need_connections=need_connections,
-                                                aux_indices=aux_indices)
-    return new_vertices, new_connections
+    new_vertices = convex_hull(vertices_addApoint, need_connections=need_connections,
+                               aux_indices=aux_indices, need_equations=need_equations)
+    # enforce simplex
+    equations = new_vertices.equations
+    new_equations = None
+    if need_equations:
+        A, b = equations["A"], equations["b"]
+        k = None
+        for i in range(A.shape[0]):
+            elements = set(A[i, :])
+            if isSingleton_eps(elements):
+                k = i
+                break
+        b_prime = -b[k]
+        A_prime = -A[k, :]
+        A = np.append(A, [A_prime], axis=0)
+        b = np.append(b, [b_prime], axis=0)
+        new_equations = {"A": A, "b": -b}
+
+    hull_vertices = Vertices(new_vertices.vertices, new_vertices.connections, equations=new_equations)
+    return hull_vertices
 
 
-def remove_non_vertex_analytic(vertices, need_connections, rotation_parameters):
+def remove_non_vertex_analytic(vertices, rotation_parameters, need_connections=False, need_equations=False):
     def rotate_points(points):
         o = rotation_parameters["o"]
         A_pseudo_inv = rotation_parameters["A_pseudo_inv"]
@@ -101,10 +155,10 @@ def remove_non_vertex_analytic(vertices, need_connections, rotation_parameters):
         return original_points
 
     rotated_vertices = rotate_points(vertices)
-    new_vertices, connections = convex_hull(rotated_vertices, need_connections=need_connections,
-                                            aux_indices=None)
+    new_vertices, connections, equations = convex_hull(rotated_vertices, need_connections=need_connections,
+                                                       aux_indices=None, need_equations=need_equations)
     final_vertices = rotate_back_points(new_vertices)
-    return final_vertices, connections
+    return Vertices(vertices=final_vertices, connections=connections, equations=equations)
 
 
 def isInHull(point, vertices):
@@ -119,9 +173,28 @@ def isInHull(point, vertices):
 
     vertices.append(point)
 
-    hull_vertices, _ = remove_non_vertex_auxPoint(vertices, False)
+    hull_vertices = remove_non_vertex_auxPoint(vertices, False)
 
     if isInVertices(point, hull_vertices):
         return False
     else:
         return True
+
+
+def intersect(vertices1, vertices2):
+    if vertices1.equations is None:
+        vertices1_new = remove_non_vertex_auxPoint(vertices1, need_equations=True, need_connections=False)
+        equations1 = vertices1_new.equations
+    if vertices2.equations is None:
+        vertices2_new = remove_non_vertex_auxPoint(vertices2, need_equations=True, need_connections=False)
+        equations2 = vertices2_new.equations
+
+    A1, b1 = equations1["A"], equations1["b"]
+    A2, b2 = equations2["A"], equations2["b"]
+
+    new_A = np.append(A1, A2, axis=0)
+    new_b = np.append(b1, b2, axis=0)
+
+    vertices, rays, found = con2vert(new_A, new_b)
+
+    return vertices, rays, found

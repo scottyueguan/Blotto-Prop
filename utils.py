@@ -1,15 +1,35 @@
 import numpy as np
 from operator import itemgetter
 from copy import deepcopy
+from typing import List
 
 
 class Vertices:
-    def __init__(self, vertices, connections):
+    def __init__(self, vertices: List, connections=None, equations=None):
         self.vertices = vertices
         self.connections = connections
+        self.equations = equations
 
     def __len__(self):
         return len(self.vertices)
+
+    def __iter__(self):
+        self.ix = 0
+        return iter(self.vertices)
+
+    def __next__(self):
+        if self.ix == len(self.vertices):
+            raise StopIteration
+        else:
+            item = self.vertices[self.ix]
+            self.ix += 1
+            return item
+
+    def __getitem__(self, item):
+        return self.vertices[item]
+
+    def append(self, item):
+        self.vertices.append(item)
 
     def plot(self, ax, color, legend=None):
         vertices = self.vertices
@@ -60,11 +80,14 @@ def gen_standard_connection(n):
     return connections
 
 
-def compute_x_req(vertices_y: Vertices):
-    N = len(vertices_y.vertices[0])
+def compute_x_req(vertices_y):
+    if isinstance(vertices_y, Vertices):
+        vertices_y = vertices_y.vertices
+
+    N = len(vertices_y[0])
     x_req = np.zeros(N)
     for i in range(N):
-        vertices_y_i = [vertices_y.vertices[k][i] for k in range(len(vertices_y))]
+        vertices_y_i = [vertices_y[k][i] for k in range(len(vertices_y))]
         x_req[i] = max(vertices_y_i)
     return x_req
 
@@ -118,3 +141,37 @@ def isEqual(A, B, eps=1e-6):
         return True
     else:
         return False
+
+
+def isSingleton_eps(items, eps=1e-4):
+    if len(items) < 0:
+        raise Exception("Empty list")
+
+    example = list(items)[0]
+    for item in items:
+        if not isEqual(item, example):
+            return False
+    return True
+
+
+def generate_mesh_over_simplex(resolution, X, x_dim):
+    mesh = [[]]
+    for dim in range(x_dim - 1):
+        while len(mesh[0]) < dim + 1:
+            node = mesh.pop(0)
+            X_remain = X - sum(node)
+            children = np.linspace(0, X_remain, int(X_remain / resolution) + 1)
+            for child in children:
+                new_node = deepcopy(node)
+                new_node.append(child)
+                mesh.append(new_node)
+    for point in mesh:
+        point.append(X - sum(point))
+    return mesh
+
+
+def random_sample_over_simplex(x_dim, X):
+    x_sample = np.random.random(x_dim)
+    x_sample *= X / sum(x_sample)
+    assert abs(sum(x_sample) - X) < 1e-4
+    return x_sample

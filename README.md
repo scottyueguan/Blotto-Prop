@@ -1,4 +1,13 @@
 # Blotto Prop Algorithm
+## Installation
+Create a conda environment in the terminal 
+``conda create --name blotto-prop``.
+
+Activate the environment 
+``conda activate blotto-prop``.
+
+Install the required packages
+``pip install -r requirements.txt``
 
 
 
