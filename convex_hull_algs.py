@@ -4,6 +4,7 @@ from operator import itemgetter
 import itertools
 import cdd
 from utils import isSingleton_eps, Vertices
+from copy import deepcopy
 
 
 def con2vert(A, b):
@@ -100,13 +101,36 @@ def convex_hull(points, aux_indices=None, need_connections=False, need_equations
 def remove_non_vertex_auxPoint(vertices, need_connections=False, need_equations=False):
     def add_aux_point(points):
         example = vertices[0]
-        aux_point = np.zeros(example.shape) + sum(example)
-        points.append(aux_point)
-        aux_points = [aux_point]
+        aux_points = []
+        aux_indices = []
+
+        # add within simplex aux points for zero-support dimensions
+        support_index = [False for _ in range(len(example))]  # False for non-support, True for support
+        for point in points:
+            for dim in range(len(point)):
+                if point[dim] > 0:
+                    support_index[dim] = True
+            if all(support_index):
+                break
+
+        if not all(support_index):
+            for index in range(len(support_index)):
+                if not support_index[index]:
+                    in_simplex_aux_point = np.zeros(example.shape)
+                    in_simplex_aux_point[index] = sum(example)
+                    points.append(in_simplex_aux_point)
+                    aux_points.append(in_simplex_aux_point)
+                    aux_indices.append(len(points) - 1)
+
+        # Add out of simplex aux point
+        out_of_simplex_aux_point = np.zeros(example.shape) + sum(example)
+        points.append(out_of_simplex_aux_point)
+        aux_points = [out_of_simplex_aux_point]
         aux_indices = [len(points) - 1]
+
         return points, aux_points, aux_indices
 
-    vertices_addApoint, aux_points, aux_indices = add_aux_point(vertices)
+    vertices_addApoint, aux_points, aux_indices = add_aux_point(deepcopy(vertices))
     new_vertices = convex_hull(vertices_addApoint, need_connections=need_connections,
                                aux_indices=aux_indices, need_equations=need_equations)
     # enforce simplex

@@ -35,7 +35,7 @@ def check_attacker_winning_graph(env: Environment, sampling_method="random", n_s
                 y_sample_pairs.append([np.array(y0), np.array(y1)])
 
     # To test figure 4 scenario
-    y_sample_pairs.append([np.array([0.9, 0.1, 0.0, 0.0, 0.0]), np.array([0.1, 0.9, 0.0, 0.0, 0.0])])
+    # y_sample_pairs.append([np.array([0.9, 0.1, 0.0, 0.0, 0.0]), np.array([0.1, 0.9, 0.0, 0.0, 0.0])])
 
     for i in tqdm(range(len(y_sample_pairs))):
         y_sample_pair = y_sample_pairs[i]

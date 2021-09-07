@@ -17,13 +17,13 @@ class Vertices:
         self.ix = 0
         return iter(self.vertices)
 
-    def __next__(self):
-        if self.ix == len(self.vertices):
-            raise StopIteration
-        else:
-            item = self.vertices[self.ix]
-            self.ix += 1
-            return item
+    # def __next__(self):
+    #     if self.ix == len(self.vertices):
+    #         raise StopIteration
+    #     else:
+    #         item = self.vertices[self.ix]
+    #         self.ix += 1
+    #         return item
 
     def __getitem__(self, item):
         return self.vertices[item]
@@ -69,6 +69,13 @@ def compare_vertices(vertices1: Vertices, vertices2: Vertices):
     else:
         return False
 
+def isSamePoint(point1, point2):
+    diff = point1 - point2
+    norm = np.linalg.norm(diff)
+    if isEqual(norm, 0):
+        return True
+    else:
+        return False
 
 def gen_standard_connection(n):
     connections = []

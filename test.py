@@ -2,8 +2,7 @@ from convex_hull_algs import convex_hull, remove_non_vertex_auxPoint, con2vert, 
 import numpy as np
 from utils import Vertices
 
-points = [np.array([1, 0, 0]), np.array([0, 0.8, 0.2]), np.array([0, 0, 1]),
-          np.array([1, 1, 1]), np.array([0.3, 0.2, 0.5])]
+points = [np.array([0.0, 1.0, 0]), np.array([0, 0.8, 0.2]), np.array([0, 0, 1])]
 
 vertices = remove_non_vertex_auxPoint(points, need_connections=False, need_equations=True)
 

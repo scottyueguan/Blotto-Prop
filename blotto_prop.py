@@ -5,7 +5,7 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d
 from operator import itemgetter
 from shapely.geometry import Polygon
 from copy import deepcopy
-from utils import Vertices, isEqual
+from utils import Vertices, isEqual, isSamePoint
 import itertools
 from convex_hull_algs import remove_non_vertex_auxPoint, remove_non_vertex_analytic
 
@@ -81,12 +81,32 @@ class BlottoProp:
         new_vertices = []
         for x in self.vertex_flow[-1].vertices:
             new_vertices += self._prop_vertex(x)
-        if self.hull_method == "aux_point":
-            new_vertices = remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
+
+        new_vertices = self.remove_duplicated_points(new_vertices)
+        if len(self.vertex_flow[-1]) == 1:
+            # for singleton no need to remove redundant vertices
+            new_vertices = Vertices(vertices=new_vertices)
         else:
-            new_vertices = remove_non_vertex_analytic(new_vertices, need_connections=self.need_connections)
+            if self.hull_method == "aux_point":
+                new_vertices = remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
+            else:
+                new_vertices = remove_non_vertex_analytic(new_vertices, rotation_parameters=self.rotation_parameters,
+                                                          need_connections=self.need_connections)
 
         return new_vertices
+
+    def remove_duplicated_points(self, points):
+        new_points = [points[0]]
+        for point in points:
+            flag = False
+            for existing_point in new_points:
+                if isSamePoint(point, existing_point):
+                    flag = True
+                    break
+            if not flag:
+                new_points.append(point)
+
+        return new_points
 
     def prop_multi_steps(self, t):
         for _ in range(t):
