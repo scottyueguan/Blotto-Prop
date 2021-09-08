@@ -35,6 +35,7 @@ def con2vert(A, b):
 
 def convex_hull(points, aux_indices=None, need_connections=False, need_equations=False):
     def generate_connections(hull, aux_indices=None):
+        # TODO: Fix in the high-dimensional case
         def generate_connections_from_simplex(simplex):
             connections = list(itertools.combinations(simplex, 2))
             return connections
