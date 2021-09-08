@@ -74,6 +74,7 @@ def convex_hull(points, aux_indices=None, need_connections=False, need_equations
                         non_boundary.append(connections.index(new_connection))
                     else:
                         connections.append(new_connection)
+        non_boundary = list(set(non_boundary))
         for non_index in sorted(non_boundary, reverse=True):
             connections.pop(non_index)
 

@@ -37,7 +37,10 @@ class Vertices:
         ydata = [vertices[i][1] for i in range(len(vertices))]
         zdata = [vertices[i][2] for i in range(len(vertices))]
 
-        ax.scatter3D(xdata, ydata, zdata, color=color, label='{} vertices'.format(legend), s=40)
+        if legend is not None:
+            ax.scatter3D(xdata, ydata, zdata, color=color, label='{} vertices'.format(legend), s=40)
+        else:
+            ax.scatter3D(xdata, ydata, zdata, color=color, s=40)
 
         if self.connections is not None:
             for i, connection in enumerate(self.connections):
@@ -69,6 +72,7 @@ def compare_vertices(vertices1: Vertices, vertices2: Vertices):
     else:
         return False
 
+
 def isSamePoint(point1, point2):
     diff = point1 - point2
     norm = np.linalg.norm(diff)
@@ -76,6 +80,7 @@ def isSamePoint(point1, point2):
         return True
     else:
         return False
+
 
 def gen_standard_connection(n):
     connections = []
@@ -182,3 +187,13 @@ def random_sample_over_simplex(x_dim, X):
     x_sample *= X / sum(x_sample)
     assert abs(sum(x_sample) - X) < 1e-4
     return x_sample
+
+
+def gen_standard_connection(n):
+    connections = []
+    for i in range(n):
+        if i + 1 <= n - 1:
+            connections.append([i, i + 1])
+        else:
+            connections.append([i, 0])
+    return connections
