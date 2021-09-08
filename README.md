@@ -9,6 +9,10 @@ Activate the environment
 Install the required packages
 ``pip install -r requirements.txt``
 
+If error "fatal error: gmp.h: No such file or directory" appears, gmp is not properly installed. 
+For Linux run `sudo apt-get install libgmp3-dev libmpfr-dev`. 
+For Mac try `sudo apt-get install libgmp3-dev libmpfr-dev`.
+
 
 
 ## Limitations

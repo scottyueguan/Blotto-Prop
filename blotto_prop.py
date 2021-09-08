@@ -82,10 +82,10 @@ class BlottoProp:
         for x in self.vertex_flow[-1].vertices:
             new_vertices += self._prop_vertex(x)
 
-        new_vertices = self.remove_duplicated_points(new_vertices)
         if len(self.vertex_flow[-1]) == 1:
             # for singleton no need to remove redundant vertices
             new_vertices = Vertices(vertices=new_vertices)
+            new_vertices = self.remove_duplicated_points(new_vertices)
         else:
             if self.hull_method == "aux_point":
                 new_vertices = remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
