@@ -39,7 +39,7 @@ def compute_C2C_time(env: Environment, x_s, x_g, role):
 
 
 if __name__ == "__main__":
-    env_name = "figure-4"
+    env_name = "figure-4-v2"
     env = generate_env_from_name(env_name)
 
     x_s = np.array([1.0, 1.0, 0.0, 0.0, 1.01])

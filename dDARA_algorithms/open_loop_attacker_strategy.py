@@ -2,7 +2,7 @@ import numpy as np
 from blotto_prop import BlottoProp
 from environments import Environment, generate_env_from_name
 from utils import generate_mesh_over_simplex, random_sample_over_simplex
-from utils import compute_x_req, req_2_simplex
+from utils import compute_x_req, req_2_simplex, isEqual
 from convex_hull_algs import intersect
 from copy import deepcopy
 
@@ -67,7 +67,7 @@ def open_loop_attacker_strategy(env: Environment, x_0, y_0, t_max, sampling_meth
             P_req = req_2_simplex(x_req=x_req, X=X)
 
             # check intersection of P_req and R_x
-            _, _, intersection_flag = intersect(P_req, R_x_vertices)
+            _, _, intersection_flag = intersect(P_req, R_x_vertices, sloppy=False)
             if not intersection_flag:
                 y_g = deepcopy(y_sample)
                 break
@@ -82,10 +82,13 @@ def open_loop_attacker_strategy(env: Environment, x_0, y_0, t_max, sampling_meth
 
 
 if __name__ == "__main__":
-    env_name = "figure-4"
+    env_name = "figure-4-v2"
     env = generate_env_from_name(env_name)
+    #               1  2  3  4  5  6  7
+    x_0 = np.array([1, 0, 0, 0, 1, 1, 1])
+    y_0 = np.array([1, 0, 0, 0, 0, 0, 0])
 
-    x_0 = np.array([3.01, 0.0, 0.0, 0.0, 0.0])
-    y_0 = np.array([1.0, 0.0, 0.0, 0.0, 0.0])
+    assert isEqual(sum(x_0), env.X)
+    assert isEqual(sum(y_0), env.Y)
 
-    soln = open_loop_attacker_strategy(env=env, x_0=x_0, y_0=y_0, t_max=10, sampling_method="mesh", resolution=0.5)
+    soln = open_loop_attacker_strategy(env=env, x_0=x_0, y_0=y_0, t_max=10, sampling_method="mesh", resolution=1)

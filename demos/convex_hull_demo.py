@@ -18,6 +18,6 @@ ax = plt.axes(projection='3d')
 ax.view_init(azim=50, elev=45)
 vertices_3.plot(ax=ax, color='b', legend='Points')
 
-hull_3 = remove_non_vertex_auxPoint(points_3, need_connections=False)
+hull_3, success = remove_non_vertex_auxPoint(points_3, need_connections=False)
 hull_3.plot(ax=ax, color='r', legend='Hull Vertices')
 plt.show()

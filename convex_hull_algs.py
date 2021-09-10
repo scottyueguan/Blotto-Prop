@@ -34,7 +34,20 @@ def con2vert(A, b):
 
 
 def convex_hull(points, aux_indices=None, need_connections=False, need_equations=False):
-    def generate_connections(hull, aux_indices=None):
+    def generate_vertex_index_mapping(hull):
+        vertrex_index = hull.vertices
+        n_points = hull.npoints
+        mapping = []
+        used_index = 0
+        for index in range(n_points):
+            if index in vertrex_index:
+                mapping.append(used_index)
+                used_index += 1
+            else:
+                mapping.append(None)
+        return mapping
+
+    def generate_connections_v1(hull, aux_indices=None):
         # TODO: Fix in the high-dimensional case
         def generate_connections_from_simplex(simplex):
             connections = list(itertools.combinations(simplex, 2))
@@ -50,16 +63,7 @@ def convex_hull(points, aux_indices=None, need_connections=False, need_equations
             else:
                 return False
 
-        vertrex_index = hull.vertices
-        n_points = hull.npoints
-        mapping = []
-        used_index = 0
-        for index in range(n_points):
-            if index in vertrex_index:
-                mapping.append(used_index)
-                used_index += 1
-            else:
-                mapping.append(None)
+        mapping = generate_vertex_index_mapping(hull)
 
         simplices = hull.simplices
         connections = []
@@ -81,14 +85,25 @@ def convex_hull(points, aux_indices=None, need_connections=False, need_equations
 
         return list(connections)
 
-    hull = ConvexHull(points)
+    def generate_connections_v2(hull, aux_indices=None):
+        mapping = generate_vertex_index_mapping(hull)
+
+    try:
+        hull = ConvexHull(points)
+    except:
+        hull_vertices = None
+        success = False
+        return hull_vertices, success
+
+    # hull = ConvexHull(points)
+
     vertex_index = set(hull.vertices) - set(aux_indices)
     new_vertices = list(itemgetter(*vertex_index)(points))
 
     connections, equations = None, None
 
     if need_connections:
-        connections = generate_connections(hull, aux_indices=aux_indices)
+        connections = generate_connections_v1(hull, aux_indices=aux_indices)
 
     if need_equations:
         A = hull.equations[:, :-1]
@@ -96,8 +111,8 @@ def convex_hull(points, aux_indices=None, need_connections=False, need_equations
         equations = {"A": A, 'b': b}
 
     hull_vertices = Vertices(vertices=new_vertices, connections=connections, equations=equations)
-
-    return hull_vertices
+    success = True
+    return hull_vertices, success
 
 
 def remove_non_vertex_auxPoint(vertices, need_connections=False, need_equations=False):
@@ -133,8 +148,10 @@ def remove_non_vertex_auxPoint(vertices, need_connections=False, need_equations=
         return points, aux_points, aux_indices
 
     vertices_addApoint, aux_points, aux_indices = add_aux_point(deepcopy(vertices))
-    new_vertices = convex_hull(vertices_addApoint, need_connections=need_connections,
-                               aux_indices=aux_indices, need_equations=need_equations)
+    new_vertices, success = convex_hull(vertices_addApoint, need_connections=need_connections,
+                                        aux_indices=aux_indices, need_equations=need_equations)
+    if not success:
+        return None, False
     # enforce simplex
     equations = new_vertices.equations
     new_equations = None
@@ -153,7 +170,7 @@ def remove_non_vertex_auxPoint(vertices, need_connections=False, need_equations=
         new_equations = {"A": A, "b": -b}
 
     hull_vertices = Vertices(new_vertices.vertices, new_vertices.connections, equations=new_equations)
-    return hull_vertices
+    return hull_vertices, success
 
 
 def remove_non_vertex_analytic(vertices, rotation_parameters, need_connections=False, need_equations=False):
@@ -197,9 +214,12 @@ def isInHull(point, vertices):
     if isInVertices(point, vertices):
         return True
 
-    vertices.append(point)
+    new_vertices = deepcopy(vertices)
+    new_vertices.append(point)
+    hull_vertices, success = remove_non_vertex_auxPoint(new_vertices, False)
 
-    hull_vertices = remove_non_vertex_auxPoint(vertices, False)
+    if not success:
+        raise Exception("isInHull failed, due to convex hull failure!")
 
     if isInVertices(point, hull_vertices):
         return False
@@ -207,20 +227,49 @@ def isInHull(point, vertices):
         return True
 
 
-def intersect(vertices1, vertices2):
-    if vertices1.equations is None:
-        vertices1_new = remove_non_vertex_auxPoint(vertices1, need_equations=True, need_connections=False)
-        equations1 = vertices1_new.equations
-    if vertices2.equations is None:
-        vertices2_new = remove_non_vertex_auxPoint(vertices2, need_equations=True, need_connections=False)
-        equations2 = vertices2_new.equations
+def intersect(vertices1, vertices2, sloppy=False):
+    def intersect_equation(vertices1, vertices2):
+        if vertices1.equations is None:
+            vertices1_new, success = remove_non_vertex_auxPoint(vertices1, need_equations=True, need_connections=False)
+            assert success is True
+            equations1 = vertices1_new.equations
+        if vertices2.equations is None:
+            vertices2_new, success = remove_non_vertex_auxPoint(vertices2, need_equations=True, need_connections=False)
+            assert success is True
+            equations2 = vertices2_new.equations
 
-    A1, b1 = equations1["A"], equations1["b"]
-    A2, b2 = equations2["A"], equations2["b"]
+        A1, b1 = equations1["A"], equations1["b"]
+        A2, b2 = equations2["A"], equations2["b"]
 
-    new_A = np.append(A1, A2, axis=0)
-    new_b = np.append(b1, b2, axis=0)
+        new_A = np.append(A1, A2, axis=0)
+        new_b = np.append(b1, b2, axis=0)
 
-    vertices, rays, found = con2vert(new_A, new_b)
+        vertices, rays, found = con2vert(new_A, new_b)
+        return vertices, rays, found
+
+    def intersection_sloppy(vertices1, vertices2):
+        for point in vertices1:
+            if isInHull(point, vertices2):
+                found = True
+                return None, None, found
+        for point in vertices2:
+            if isInHull(point, vertices1):
+                found = True
+                return None, None, found
+        found = False
+        return None, None, found
+
+    if sloppy:
+        Warning('Using sloppy intersection. Will not produce vertices and rays!')
+        vertices, rays, found = intersection_sloppy(vertices1, vertices2)
+
+    else:
+        vertices, rays, found = intersect_equation(vertices1, vertices2)
 
     return vertices, rays, found
+
+
+# testing
+if __name__ == "__main__":
+    points = [np.array([1, 0, 0, 0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0, 1]), np.array([0, 0, 0, 0, 0.5, 0.5, 0])]
+    vertices, success = remove_non_vertex_auxPoint(points)

@@ -105,7 +105,7 @@ def compute_x_req(vertices_y):
 
 
 def req_2_simplex(x_req, X):
-    assert sum(x_req) < X
+    assert sum(x_req) <= X
     cut_points = []
     x_dim = x_req.shape[0]
 

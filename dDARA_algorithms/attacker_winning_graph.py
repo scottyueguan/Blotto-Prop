@@ -7,10 +7,11 @@ from convex_hull_algs import isInHull, intersect
 from utils import generate_x_req_set
 from tqdm import tqdm
 from utils import generate_mesh_over_simplex, random_sample_over_simplex
+from concurrent.futures import *
 
 
+# TODO: Implement multi-thread
 def check_attacker_winning_graph(env: Environment, sampling_method="random", n_samples=10, resolution=None):
-
 
     prop_X = BlottoProp(connectivity=env.connectivity_X, agent_name="Defender")
     prop_Y = BlottoProp(connectivity=env.connectivity_Y, agent_name="Attacker")
@@ -35,16 +36,16 @@ def check_attacker_winning_graph(env: Environment, sampling_method="random", n_s
                 y_sample_pairs.append([np.array(y0), np.array(y1)])
 
     # To test figure 4 scenario
-    # y_sample_pairs.append([np.array([0.9, 0.1, 0.0, 0.0, 0.0]), np.array([0.1, 0.9, 0.0, 0.0, 0.0])])
+    # y_sample_pairs = [[np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0])]]
 
     for i in tqdm(range(len(y_sample_pairs))):
         y_sample_pair = y_sample_pairs[i]
         y_s, y_g = y_sample_pair[0], y_sample_pair[1]
 
         # propagate y_s and y_g for one step
-        prop_Y.set_initial_vertices(initial_vertices=[y_s])
+        prop_Y.set_initial_vertices(initial_vertices=[y_s], perturb_singleton=False)
         y_vertices_s = prop_Y.prop_step()
-        prop_Y.set_initial_vertices(initial_vertices=[y_g])
+        prop_Y.set_initial_vertices(initial_vertices=[y_g], perturb_singleton=False)
         y_vertices_g = prop_Y.prop_step()
 
         # generate x req sets
@@ -79,7 +80,7 @@ def check_attacker_winning_graph(env: Environment, sampling_method="random", n_s
 
 
 if __name__ == "__main__":
-    env_name = "figure-4"
+    env_name = "figure-4-v2"
     env = generate_env_from_name(env_name)
 
     soln = check_attacker_winning_graph(env=env, n_samples=0, sampling_method="mesh", resolution=0.5)

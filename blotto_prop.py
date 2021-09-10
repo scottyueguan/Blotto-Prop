@@ -8,6 +8,7 @@ from copy import deepcopy
 from utils import Vertices, isEqual, isSamePoint
 import itertools
 from convex_hull_algs import remove_non_vertex_auxPoint, remove_non_vertex_analytic
+import warnings
 
 
 class BlottoProp:
@@ -48,7 +49,7 @@ class BlottoProp:
     def __len__(self):
         return len(self.vertex_flow)
 
-    def _generate_initial_vertex(self, points, perturb_singleton=True):
+    def _generate_initial_vertex(self, points, perturb_singleton=False):
         if len(points) > 1:
             return [Vertices(points, None)]
 
@@ -56,7 +57,10 @@ class BlottoProp:
         X = sum(x0)
         if not perturb_singleton:
             return [Vertices([x0], None)]
-        else:
+        elif perturb_singleton:
+            warnings.warn('\n Try not to use perturb_singleton option for initial vertex setup! '
+                          'If initial vertices are degenerate, do not run convex hull, '
+                          'remove duplicated points instead. \n')
             perturbed_points = []
             for i in range(len(x0)):
                 new_point = deepcopy(x0)
@@ -84,11 +88,15 @@ class BlottoProp:
 
         if len(self.vertex_flow[-1]) == 1:
             # for singleton no need to remove redundant vertices
-            new_vertices = Vertices(vertices=new_vertices)
             new_vertices = self.remove_duplicated_points(new_vertices)
+            new_vertices = Vertices(vertices=new_vertices)
         else:
             if self.hull_method == "aux_point":
-                new_vertices = remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
+                new_vertices, success = remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
+                if not success:
+                    Warning("Convex hull failed. Only removed duplicated points and no equations generated!")
+                    new_vertices = self.remove_duplicated_points(new_vertices)
+                    new_vertices = Vertices(vertices=new_vertices)
             else:
                 new_vertices = remove_non_vertex_analytic(new_vertices, rotation_parameters=self.rotation_parameters,
                                                           need_connections=self.need_connections)
