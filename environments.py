@@ -13,6 +13,12 @@ class Environment:
         self.X = X
         self.Y = Y
 
+    def set_X(self, X):
+        self.X = X
+
+    def set_Y(self, Y):
+        self.Y = Y
+
     def get_dimension_X(self):
         return self.connectivity_X.shape[0]
 
@@ -47,7 +53,7 @@ def generate_env_from_name(name: str):
                                  [0, 0, 1, 1, 1, 0, 0],  # 4
                                  [0, 0, 0, 0, 1, 1, 0],  # 5
                                  [0, 0, 0, 0, 0, 1, 1],  # 6
-                                 [1, 0, 0, 0, 0, 0, 1]]) # 7
+                                 [1, 0, 0, 0, 0, 0, 1]])  # 7
         Tf = 10
 
         X = 4
@@ -57,8 +63,6 @@ def generate_env_from_name(name: str):
 
     else:
         raise Exception("Environment name not valid!")
-
-
 
         # #                         1  2  3  4  5  6  7  8  9  10
         # connectivity = np.array([[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],  # 1

@@ -82,5 +82,7 @@ def check_attacker_winning_graph(env: Environment, sampling_method="random", n_s
 if __name__ == "__main__":
     env_name = "figure-4-v2"
     env = generate_env_from_name(env_name)
+    env.set_X(X=3.01)
+    env.set_Y(Y=1)
 
-    soln = check_attacker_winning_graph(env=env, n_samples=0, sampling_method="mesh", resolution=0.5)
+    soln = check_attacker_winning_graph(env=env, n_samples=0, sampling_method="mesh", resolution=1)
