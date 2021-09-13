@@ -104,17 +104,20 @@ class BlottoProp:
         return new_vertices
 
     def remove_duplicated_points(self, points):
-        new_points = [points[0]]
-        for point in points:
-            flag = False
-            for existing_point in new_points:
-                if isSamePoint(point, existing_point):
-                    flag = True
-                    break
-            if not flag:
-                new_points.append(point)
-
+        L = {point.tostring(): point for point in points}
+        new_points = list(L.values())
         return new_points
+        # new_points = [points[0]]
+        # for point in points:
+        #     flag = False
+        #     for existing_point in new_points:
+        #         if isSamePoint(point, existing_point):
+        #             flag = True
+        #             break
+        #     if not flag:
+        #         new_points.append(point)
+        #
+        # return new_points
 
     def prop_multi_steps(self, t):
         for _ in range(t):

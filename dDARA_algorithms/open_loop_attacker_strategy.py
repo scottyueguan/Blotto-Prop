@@ -76,8 +76,8 @@ def open_loop_attacker_strategy(env: Environment, x_0, y_0, t_max, sampling_meth
     if intersection_flag:
         print("No solution found!")
     else:
-        np.set_printoptions(precision=3)
-        print("Solution found with y_g = {}".format(y_g))
+        np.set_printoptions(precision=2)
+        print("Solution found with y_0 = {}, y_g = {}".format(y_0, y_g))
     return y_g
 
 

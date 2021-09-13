@@ -42,8 +42,8 @@ if __name__ == "__main__":
     env_name = "figure-4-v2"
     env = generate_env_from_name(env_name)
 
-    x_s = np.array([1.0, 1.0, 0.0, 0.0, 1.01])
-    x_g = np.array([0.0, 1.0, 1.0, 1.01, 0.0])
+    x_s = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0])
+    x_g = np.array([0.0, 0.0, 1.0, 2.0, 1.0, 0.0, 0.0])
 
     tau = compute_C2C_time(env=env, x_s=x_s, x_g=x_g, role="X")
 
