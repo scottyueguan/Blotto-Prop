@@ -227,7 +227,7 @@ def isInHull(point, vertices):
         return True
 
 
-def intersect(vertices1, vertices2, sloppy=False):
+def intersect(vertices1, vertices2, sloppy=False, need_connections=False):
     def intersect_equation(vertices1, vertices2):
         if vertices1.equations is None:
             vertices1_new, success = remove_non_vertex_auxPoint(vertices1, need_equations=True, need_connections=False)
@@ -245,6 +245,12 @@ def intersect(vertices1, vertices2, sloppy=False):
         new_b = np.append(b1, b2, axis=0)
 
         vertices, rays, found = con2vert(new_A, new_b)
+
+        if need_connections:
+            vertices_with_equations, success = remove_non_vertex_auxPoint(vertices, need_connections=True)
+            assert success
+            return vertices_with_equations, rays, found
+
         return vertices, rays, found
 
     def intersection_sloppy(vertices1, vertices2):

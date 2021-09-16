@@ -37,10 +37,8 @@ class Vertices:
         ydata = [vertices[i][1] for i in range(len(vertices))]
         zdata = [vertices[i][2] for i in range(len(vertices))]
 
-        if legend is not None:
-            ax.scatter3D(xdata, ydata, zdata, color=color, label='{} vertices'.format(legend), s=40)
-        else:
-            ax.scatter3D(xdata, ydata, zdata, color=color, s=40)
+
+        ax.scatter3D(xdata, ydata, zdata, color=color, s=40)
 
         if self.connections is not None:
             for i, connection in enumerate(self.connections):
@@ -105,7 +103,7 @@ def compute_x_req(vertices_y):
 
 
 def req_2_simplex(x_req, X):
-    assert sum(x_req) <= X
+    assert sum(x_req) <= X + 1e-5
     cut_points = []
     x_dim = x_req.shape[0]
 

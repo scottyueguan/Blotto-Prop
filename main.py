@@ -1,89 +1,89 @@
 import numpy as np
 from blotto_prop import BlottoProp
 import matplotlib.pyplot as plt
-from utils import compute_y_req_v1, compute_y_req_v2, compute_x_req, compare_vertices
 from copy import deepcopy
+from environments import generate_env_from_name, Environment
+from utils import generate_x_req_set, Vertices
+from convex_hull_algs import intersect
 
-x_0 = 2 * np.array([0.1, 0.3, 0.6])
-y_0 = np.array([0.7, 0.1, 0.2])
 
-T = 5  # Terminal time
+def blotto_prop_cut(env: Environment, x_0, y_0, Tf, visualize=False):
+    need_connection = True if visualize else False
 
-Connectivity = np.array([[1, 1, 0], [0, 1, 1], [1, 0, 1]])
-N = len(Connectivity)
+    # set up graph info
+    connectivity_X = env.connectivity_X
+    connectivity_Y = env.connectivity_Y
 
-prop_X = BlottoProp(connectivity=Connectivity, x0=x_0, T=T, agent_name="Defender", hull_method='aux_point',
-                    need_connections=False)
-prop_Y = BlottoProp(connectivity=Connectivity, x0=y_0, T=T, agent_name="Attacker")
+    # set up propagation algorithm
+    prop_X = BlottoProp(connectivity=connectivity_X, T=Tf, agent_name='Defender', hull_method='aux_point',
+                        need_connections=need_connection)
+    prop_X.set_initial_vertices([x_0])
 
-# plot agents' initial distributions
-ax_Y = prop_Y.plot_simplex(t=0)
-ax_Y = prop_Y.vertex_flow[-1].plot(ax_Y, color='m', legend='Attacker')
+    prop_Y = BlottoProp(connectivity=connectivity_Y, T=Tf, agent_name='Attacker', hull_method='aux_point',
+                        need_connections=need_connection)
+    prop_Y.set_initial_vertices([y_0])
 
-ax_X = prop_X.plot_simplex(t=0)
-ax_X = prop_X.vertex_flow[-1].plot(ax_X, color='m', legend='Defender')
+    # record set flow
+    x_req_flow = [generate_x_req_set(vertices_y=Vertices([y_0]), X=env.X)]
+    x_reachable_set_flow = [Vertices([x_0])]
+    x_safe_set_flow = [Vertices([x_0])]
 
-for t in range(1, T + 1):
+    y_reachable_set_flow = [Vertices([y_0])]
 
-    # propogate feasible region
-    x_vertices = prop_X.prop_step()
+    for t in range(1, Tf + 1):
+        # propagate feasible region
+        x_vertices_t = prop_X.prop_step()
+        y_vertices_t = prop_Y.prop_step()
 
-    y_vertices = prop_Y.prop_step()
+        # cut x_vertices_t
+        x_vertices_t_tmp = deepcopy(x_vertices_t)
+        x_vertices_req_t = generate_x_req_set(vertices_y=y_vertices_t, X=env.X)
+        x_safe_vertices_t, _, found = intersect(vertices1=x_vertices_req_t, vertices2=x_vertices_t_tmp, sloppy=False,
+                                                need_connections=True)
 
-    ax_X = prop_X.plot_simplex(t=0)
-    ax_X = x_vertices.plot(ax_X, color='m', legend='Defender')
-    plt.show()
+        # record vertices
+        x_reachable_set_flow.append(x_vertices_t)
+        y_reachable_set_flow.append(y_vertices_t)
+        x_req_flow.append(x_vertices_req_t)
+        x_safe_set_flow.append(x_safe_vertices_t)
 
-    x_cutted_vertices = deepcopy(x_vertices)
+        # append vertices
+        prop_X.append_flow(x_safe_vertices_t)
+        prop_Y.append_flow(y_vertices_t)
 
-    # start the triangular iteration
-    done_flag = False
-    while not done_flag:
-        # cut y region based on current x_vertices at t
-        y_req = compute_y_req_v2(x_cutted_vertices, eta=0.2)
-        y_cut_vertices = prop_Y.req_2_simplex(y_req)
-        y_cutted_vertices = prop_Y.cut(y_cut_vertices, y_vertices)
+        # break if the intersection is empty
+        if not found:
+            print('At time step {}, the Defender safe set is empty'.format(t))
+            break
 
-        # append cutted vertices to the flow
-        prop_Y.append_flow(y_cutted_vertices)
+    if visualize:
+        n_time_steps = len(prop_Y.vertex_flow)
+        fig_X = plt.figure(figsize=(6 * n_time_steps, 6), dpi=120)
+        fig_Y = plt.figure(figsize=(6 * n_time_steps, 6), dpi=120)
+        for t in range(n_time_steps):
+            ax_X = fig_X.add_subplot(1, n_time_steps, t + 1, projection='3d')
+            prop_X.plot_simplex(t=t, ax=ax_X, title=False)
+            x_reachable_set_flow[t].plot(ax=ax_X, color='m', legend='reachable region')
+            x_req_flow[t].plot(ax=ax_X, color='y', legend='required resource')
+            x_safe_set_flow[t].plot(ax=ax_X, color='r', legend='safe region')
 
-        # prop y region to t+1
-        y_vertices_next = prop_Y.prop_step()
+            ax_Y = fig_Y.add_subplot(1, n_time_steps, t + 1, projection='3d')
+            prop_Y.plot_simplex(t=t, ax=ax_Y, title=False)
+            y_reachable_set_flow[t].plot(ax=ax_Y, color='m', legend='reachable region')
 
-        # remove the y_cut added
-        prop_Y.revert_step()
+        fig_X.suptitle('Defender Reachable Set Analysis')
+        fig_Y.suptitle('Attacker Reachable Set Analysis')
 
-        # compute feasible region of X based on y_next
-        x_req = compute_x_req(y_vertices_next)
+        plt.show()
 
-        # Normalize x_req
-        x_req /= x_y_ratio
 
-        if sum(x_req) > 1:
-            raise Exception("Feasible region empty for defender")
+if __name__ == "__main__":
+    # Initial state
+    x_0 = np.array([0.9, 0.4, 1.8])
+    y_0 = np.array([0.7, 0.1, 0.2])
 
-        x_cut_vertices = prop_X.req_2_simplex(x_req)
-        x_cutted_vertices_new = prop_X.cut(x_cut_vertices, x_vertices)
+    # Terminal time step
+    Tf = 5
 
-        if compare_vertices(x_cutted_vertices, x_cutted_vertices_new):
-            done_flag = True
-            prop_X.append_flow(x_cutted_vertices_new)
-            prop_Y.append_flow(y_cutted_vertices)
-        else:
-            x_cutted_vertices = x_cutted_vertices_new
-
-    # plot Y's feasible region
-    ax_Y = prop_Y.plot_simplex(t=t)
-    ax_Y = y_vertices.plot(ax_Y, color='m', legend='original feasible region')
-    ax_Y = y_cut_vertices.plot(ax_Y, color='y', legend='y_req')
-    ax_Y = y_cutted_vertices.plot(ax_Y, color='r', legend='cutted')
-    plt.show()
-
-    # plot X's feasible region
-    ax_X = prop_X.plot_simplex(t=t)
-    ax_X = x_vertices.plot(ax_X, color='m', legend='original feasible region')
-    ax_X = x_cut_vertices.plot(ax_X, color='y', legend='x_req')
-    ax_X = x_cutted_vertices.plot(ax_X, color='r', legend='cutted')
-    plt.show()
-
-    print("Time step {} finished!".format(t))
+    env = generate_env_from_name('3-node')
+    blotto_prop_cut(x_0=x_0, y_0=y_0, env=env, Tf=Tf, visualize=True)

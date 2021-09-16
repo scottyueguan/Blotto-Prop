@@ -41,9 +41,9 @@ def generate_env_from_name(name: str):
         return Environment(connectivity_X=connectivity, Tf=Tf, X=X, Y=Y)
 
     elif name == "3-node":
-        connectivity = np.array([[1, 1, 0], [0, 1, 1], [1, 0, 1]])
+        connectivity = np.array([[1, 1, 0], [1, 0, 1], [1, 1, 0]])
         Tf = 5
-        X, Y = 3, 1
+        X, Y = 3.1, 1
         return Environment(connectivity_X=connectivity, Tf=Tf, X=X, Y=Y)
 
     elif name == "figure-4-v2":

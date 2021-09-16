@@ -208,13 +208,15 @@ class BlottoProp:
 
         return list
 
-    def plot_simplex(self, t, color='b'):
+    def plot_simplex(self, t, color='b', ax=None, title=True):
 
         r = self.X
 
         plt.figure(figsize=(6, 6), dpi=120)
 
-        ax = plt.axes(projection='3d')
+        if ax is None:
+            ax = plt.axes(projection='3d')
+
         ax.view_init(azim=50, elev=45)
 
         xline = np.linspace(0, r, 20)
@@ -236,7 +238,8 @@ class BlottoProp:
         ax.set_ylim3d(0, r + 0.1)
         ax.set_zlim3d(0, r + 0.1)
 
-        plt.title("Agent {} feasible region at time {}".format(self.agent_name, t), fontsize=20)
+        if title:
+            plt.title("Agent {} feasible region at time {}".format(self.agent_name, t), fontsize=20)
 
         return ax
 
