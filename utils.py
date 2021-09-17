@@ -2,7 +2,12 @@ import numpy as np
 from operator import itemgetter
 from copy import deepcopy
 from typing import List
+import mpl_toolkits.mplot3d as mp3d
+from matplotlib.colors import to_rgb as c2rgb
+import os
 
+ROOT_PATH = os.path.dirname(__file__)
+FIG_PATH = os.path.join(ROOT_PATH, 'figures')
 
 class Vertices:
     def __init__(self, vertices: List, connections=None, equations=None):
@@ -31,14 +36,25 @@ class Vertices:
     def append(self, item):
         self.vertices.append(item)
 
-    def plot(self, ax, color, legend=None):
+    def plot(self, ax, color, line_style='-', legend=None, shade=False, alpha=0.2, plot_vertices=True):
         vertices = self.vertices
         xdata = [vertices[i][0] for i in range(len(vertices))]
         ydata = [vertices[i][1] for i in range(len(vertices))]
         zdata = [vertices[i][2] for i in range(len(vertices))]
 
+        if not plot_vertices:
+            pass
+        elif self.connections is None:
+            ax.scatter3D(xdata, ydata, zdata, color=color, s=40, label=legend)
+        else:
+            ax.scatter3D(xdata, ydata, zdata, color=color, s=40)
 
-        ax.scatter3D(xdata, ydata, zdata, color=color, s=40)
+        if shade:
+            points = self._reorder_vertices()
+            face = mp3d.art3d.Poly3DCollection([points], alpha=alpha, linewidth=0)
+            rgb = c2rgb(color)
+            face.set_facecolor((*rgb, alpha))
+            ax.add_collection3d(face)
 
         if self.connections is not None:
             for i, connection in enumerate(self.connections):
@@ -49,13 +65,34 @@ class Vertices:
                 zline = [vertices[start][2], vertices[end][2]]
 
                 if i == 0:
-                    ax.plot3D(xline, yline, zline, color + "-", label=legend)
+                    ax.plot3D(xline, yline, zline, color + line_style, label=legend)
                 else:
-                    ax.plot3D(xline, yline, zline, color + "-")
+                    ax.plot3D(xline, yline, zline, color + line_style)
 
-        ax.legend(loc='lower center', fontsize=18)
+        ax.legend(loc='upper left', fontsize=12)
 
         return ax
+
+    def _reorder_vertices(self):
+        new_vertices = self.vertices
+        if self.connections is not None:
+            neighbors = [[] for _ in range(len(self.vertices))]
+            for connection in self.connections:
+                neighbors[connection[0]].append(connection[1])
+                neighbors[connection[1]].append(connection[0])
+
+            loop = [-100, 0]
+            for i in range(1, len(self.vertices) + 1):
+                for neighbor in neighbors[loop[i]]:
+                    if neighbor != loop[i - 1]:
+                        loop.append(neighbor)
+                        break
+
+            loop.pop(0)
+            loop.pop(-1)
+
+            new_vertices = [tuple(self.vertices[loop[i]]) for i in range(len(loop))]
+        return new_vertices
 
 
 def compare_vertices(vertices1: Vertices, vertices2: Vertices):

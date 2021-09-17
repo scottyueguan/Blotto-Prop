@@ -86,7 +86,7 @@ class BlottoProp:
         for x in self.vertex_flow[-1].vertices:
             new_vertices += self._prop_vertex(x)
 
-        if len(self.vertex_flow[-1]) == 1:
+        if len(self.vertex_flow[-1]) == 1 and not self.need_connections:
             # for singleton no need to remove redundant vertices
             new_vertices = self.remove_duplicated_points(new_vertices)
             new_vertices = Vertices(vertices=new_vertices)
@@ -208,11 +208,11 @@ class BlottoProp:
 
         return list
 
-    def plot_simplex(self, t, color='b', ax=None, title=True):
+    def plot_simplex(self, t, color='b', ax=None, title=True, axis_limit=None):
 
         r = self.X
 
-        plt.figure(figsize=(6, 6), dpi=120)
+        fig = plt.figure(figsize=(6, 6), dpi=120)
 
         if ax is None:
             ax = plt.axes(projection='3d')
@@ -227,21 +227,28 @@ class BlottoProp:
         xline = np.linspace(0, 0, 20)
         yline = np.linspace(0, r, 20)
         zline = r - yline
-        ax.plot3D(xline, yline, zline, 'b-')
+        ax.plot3D(xline, yline, zline, color + '-')
 
         xline = np.linspace(0, r, 20)
         yline = np.linspace(0, 0, 20)
         zline = r - xline
-        ax.plot3D(xline, yline, zline, 'b-')
+        ax.plot3D(xline, yline, zline, color + '-')
 
-        ax.set_xlim3d(0, r + 0.1)
-        ax.set_ylim3d(0, r + 0.1)
-        ax.set_zlim3d(0, r + 0.1)
+        if axis_limit is None:
+            axis_limit = r + 0.1
+
+        ax.set_xlim3d(0, axis_limit)
+        ax.set_ylim3d(0, axis_limit)
+        ax.set_zlim3d(0, axis_limit)
+
+        ax.set_xlabel('Node 1')
+        ax.set_ylabel('Node 2')
+        ax.set_zlabel('Node 3')
 
         if title:
-            plt.title("Agent {} feasible region at time {}".format(self.agent_name, t), fontsize=20)
+            plt.title("{} reachable set at time {}".format(self.agent_name, t), fontsize=20)
 
-        return ax
+        return fig, ax
 
     def _init_coordinate_transferer(self):
         o = np.zeros(self.N)

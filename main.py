@@ -80,7 +80,7 @@ def blotto_prop_cut(env: Environment, x_0, y_0, Tf, visualize=False):
 if __name__ == "__main__":
     # Initial state
     x_0 = np.array([0.9, 0.4, 1.8])
-    y_0 = np.array([0.7, 0.1, 0.2])
+    y_0 = np.array([0.3, 0.4, 0.3])
 
     # Terminal time step
     Tf = 5
