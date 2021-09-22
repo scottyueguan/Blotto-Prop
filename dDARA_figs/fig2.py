@@ -17,7 +17,7 @@ prop_X.set_initial_vertices(initial_vertices=[x0], perturb_singleton=False)
 x_vertices_1 = prop_X.prop_step()
 
 # plot reachable sets
-fig, ax = prop_X.plot_simplex(t=1)
+fig, ax = prop_X.plot_simplex(t=1, title=False, title_string=None)
 x_vertices_0 = prop_X.vertex_flow[0]
 ax = x_vertices_0.plot(ax=ax, color='b', legend='initial state')
 ax = x_vertices_1.plot(ax=ax, color='c', legend='reachable set', shade=True)

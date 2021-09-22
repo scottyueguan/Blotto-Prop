@@ -29,15 +29,15 @@ x_safe_vertices_1, _, found = intersect(vertices1=x_vertices_req_1, vertices2=de
                                         need_connections=True)
 
 # plot reachable sets
-fig_X, ax_X = prop_X.plot_simplex(t=1, color='b', axis_limit=env.X + 0.1)
+fig_X, ax_X = prop_X.plot_simplex(t=1, color='b', axis_limit=env.X + 0.1, title=False, title_string='Defender')
 x_vertices_0 = prop_X.vertex_flow[0]
 ax_X = x_vertices_0.plot(ax=ax_X, color='b', legend='initial state')
 ax_X = x_vertices_1.plot(ax=ax_X, color='c', legend='reachable set', shade=False)
-ax_X = x_safe_vertices_1.plot(ax=ax_X, color='g', line_style='-', legend='safe set', shade=True, alpha=0.5)
-ax_X = x_vertices_req_1.plot(ax=ax_X, color='y', line_style='--', legend='required resource', shade=False,
-                             plot_vertices=False)
+ax_X = x_safe_vertices_1.plot(ax=ax_X, color='g', line_style='-', legend='safe set', shade=True, alpha=0.5, line_width=1)
+ax_X = x_vertices_req_1.plot(ax=ax_X, color='y', line_style='--', legend='required set', shade=False,
+                             plot_vertices=False, line_width=3)
 
-fig_Y, ax_Y = prop_Y.plot_simplex(t=1, color='r', axis_limit=env.X + 0.1)
+fig_Y, ax_Y = prop_Y.plot_simplex(t=1, color='r', axis_limit=env.X + 0.1, title=False, title_string='Attacker')
 y_vertices_0 = prop_Y.vertex_flow[0]
 ax_Y = y_vertices_0.plot(ax=ax_Y, color='r', legend='initial state')
 ax_Y = y_vertices_1.plot(ax=ax_Y, color='m', legend='reachable set', shade=True)

@@ -208,7 +208,7 @@ class BlottoProp:
 
         return list
 
-    def plot_simplex(self, t, color='b', ax=None, title=True, axis_limit=None):
+    def plot_simplex(self, t, color='b', ax=None, title=True, title_string=None, axis_limit=None):
 
         r = self.X
 
@@ -241,13 +241,18 @@ class BlottoProp:
         ax.set_ylim3d(0, axis_limit)
         ax.set_zlim3d(0, axis_limit)
 
-        ax.set_xlabel('Node 1')
-        ax.set_ylabel('Node 2')
-        ax.set_zlabel('Node 3')
+        ax.set_xlabel('Node 1', fontsize=15)
+        ax.set_ylabel('Node 2', fontsize=15)
+        ax.set_zlabel('Node 3', fontsize=15)
 
-        if title:
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+
+        if title and title_string is None:
             plt.title("{} reachable set at time {}".format(self.agent_name, t), fontsize=20)
-
+        elif title and title_string is not None:
+            plt.title(title_string, fontsize=20)
         return fig, ax
 
     def _init_coordinate_transferer(self):

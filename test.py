@@ -27,3 +27,4 @@ import matplotlib.pyplot as plt
 #
 # ext = poly.get_generators()
 # print(ext)
+print(np.random.random())

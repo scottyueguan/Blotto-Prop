@@ -36,7 +36,7 @@ class Vertices:
     def append(self, item):
         self.vertices.append(item)
 
-    def plot(self, ax, color, line_style='-', legend=None, shade=False, alpha=0.2, plot_vertices=True):
+    def plot(self, ax, color, line_style='-', line_width=None, legend=None, shade=False, alpha=0.2, plot_vertices=True):
         vertices = self.vertices
         xdata = [vertices[i][0] for i in range(len(vertices))]
         ydata = [vertices[i][1] for i in range(len(vertices))]
@@ -65,11 +65,11 @@ class Vertices:
                 zline = [vertices[start][2], vertices[end][2]]
 
                 if i == 0:
-                    ax.plot3D(xline, yline, zline, color + line_style, label=legend)
+                    ax.plot3D(xline, yline, zline, color + line_style, label=legend, linewidth=line_width)
                 else:
-                    ax.plot3D(xline, yline, zline, color + line_style)
+                    ax.plot3D(xline, yline, zline, color + line_style, linewidth=line_width)
 
-        ax.legend(loc='upper left', fontsize=12)
+        ax.legend(loc='upper left', fontsize=15)
 
         return ax
 
