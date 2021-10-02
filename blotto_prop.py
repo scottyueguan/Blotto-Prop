@@ -5,7 +5,7 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d
 from operator import itemgetter
 from shapely.geometry import Polygon
 from copy import deepcopy
-from utils import Vertices, isEqual, isSamePoint
+from utils import Vertices, isEqual, isSamePoint, remove_duplicated_points
 import itertools
 from convex_hull_algs import remove_non_vertex_auxPoint, remove_non_vertex_analytic
 import warnings
@@ -88,14 +88,14 @@ class BlottoProp:
 
         if len(self.vertex_flow[-1]) == 1 and not self.need_connections:
             # for singleton no need to remove redundant vertices
-            new_vertices = self.remove_duplicated_points(new_vertices)
+            new_vertices = remove_duplicated_points(new_vertices)
             new_vertices = Vertices(vertices=new_vertices)
         else:
             if self.hull_method == "aux_point":
                 new_vertices, success = remove_non_vertex_auxPoint(new_vertices, need_connections=self.need_connections)
                 if not success:
                     Warning("Convex hull failed. Only removed duplicated points and no equations generated!")
-                    new_vertices = self.remove_duplicated_points(new_vertices)
+                    new_vertices = remove_duplicated_points(new_vertices)
                     new_vertices = Vertices(vertices=new_vertices)
             else:
                 new_vertices = remove_non_vertex_analytic(new_vertices, rotation_parameters=self.rotation_parameters,
@@ -103,21 +103,7 @@ class BlottoProp:
 
         return new_vertices
 
-    def remove_duplicated_points(self, points):
-        L = {point.tostring(): point for point in points}
-        new_points = list(L.values())
-        return new_points
-        # new_points = [points[0]]
-        # for point in points:
-        #     flag = False
-        #     for existing_point in new_points:
-        #         if isSamePoint(point, existing_point):
-        #             flag = True
-        #             break
-        #     if not flag:
-        #         new_points.append(point)
-        #
-        # return new_points
+
 
     def prop_multi_steps(self, t):
         for _ in range(t):

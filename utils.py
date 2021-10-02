@@ -9,6 +9,7 @@ import os
 ROOT_PATH = os.path.dirname(__file__)
 FIG_PATH = os.path.join(ROOT_PATH, 'figures')
 
+
 class Vertices:
     def __init__(self, vertices: List, connections=None, equations=None):
         self.vertices = vertices
@@ -232,3 +233,14 @@ def gen_standard_connection(n):
         else:
             connections.append([i, 0])
     return connections
+
+
+def remove_duplicated_points(points):
+    new_points = np.unique(points, axis=0)
+    return new_points
+
+
+if __name__ == "__main__":
+    points = [np.array([1, 8, 3, 3, 4]), np.array([1, 8, 3, 3, 4]), np.array([1, 2, 3, 3, 4])]
+    new_points = remove_duplicated_points(points)
+    print(new_points)
