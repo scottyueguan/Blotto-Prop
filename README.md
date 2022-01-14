@@ -13,6 +13,14 @@ If error "fatal error: gmp.h: No such file or directory" appears, gmp is not pro
 For Linux run `sudo apt-get install libgmp3-dev libmpfr-dev`. 
 For Mac try `sudo apt-get install libgmp3-dev libmpfr-dev`.
 
+## Install Gurobi
+Activate the conda environment and then run
+``conda install -c gurobi gurobi``
+
+Academic license for Gurobi can be requested at
+https://www.gurobi.com/academia/academic-program-and-licenses/ 
+
+Copy the key and run ``grbgetkey <key>``.
 
 
 ## Limitations

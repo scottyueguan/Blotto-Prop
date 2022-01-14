@@ -4,3 +4,4 @@ scipy
 shapely
 tqdm
 pycddlib
+gurobi
