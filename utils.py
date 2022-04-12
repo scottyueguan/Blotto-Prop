@@ -37,6 +37,13 @@ class Vertices:
     def append(self, item):
         self.vertices.append(item)
 
+    @property
+    def has_equations(self):
+        if self.equations is not None:
+            return True
+        else:
+            return False
+
     def plot(self, ax, color, line_style='-', line_width=None, legend=None, shade=False, alpha=0.2, plot_vertices=True):
         vertices = self.vertices
         xdata = [vertices[i][0] for i in range(len(vertices))]
@@ -141,6 +148,7 @@ def compute_x_req(vertices_y):
 
 
 def req_2_simplex(x_req, X):
+    from convex_hull_algs import convex_hull
     assert sum(x_req) <= X + 1e-5
     cut_points = []
     x_dim = x_req.shape[0]
@@ -150,14 +158,34 @@ def req_2_simplex(x_req, X):
         cut_vertex[i] = X - sum(x_req) + x_req[i]  # cut_vertex = 1 - sum_{k!=i} x_req[i]
         cut_points.append(cut_vertex)
 
-    connections = gen_standard_connection(x_dim)
+    polytope, success = convex_hull(points=cut_points, need_connections=True, need_equations=True)
+    assert success
 
-    return Vertices(cut_points, connections)
+    return polytope
+
+
+def req_cut(x_req):
+    from convex_hull_algs import convex_hull
+    N = x_req.shape[0]
+    vertices = [x_req]
+    for i in range(N):
+        cut_vertex = deepcopy(x_req)
+        cut_vertex[i] = 0
+        cut_vertex[i] = N - np.sum(cut_vertex)
+        vertices.append(cut_vertex)
+
+    polytope, success = convex_hull(points=vertices, need_connections=True, need_equations=True)
+    assert success
+
+    return polytope
 
 
 def generate_x_req_set(vertices_y: Vertices, X):
     x_req = compute_x_req(vertices_y)
-    x_req_vertices = req_2_simplex(x_req, X)
+    if X is not None:
+        x_req_vertices = req_2_simplex(x_req, X)
+    else:
+        x_req_vertices = req_cut(x_req)
     return x_req_vertices
 
 

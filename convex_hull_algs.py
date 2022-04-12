@@ -8,6 +8,7 @@ from copy import deepcopy
 
 
 def con2vert(A, b):
+    # for Ax <= b
     b = np.reshape(b, (len(b), 1))
     concated_matrix = np.append(b, -A, axis=1)
 
@@ -33,7 +34,7 @@ def con2vert(A, b):
     return Vertices(vertices=vertices), rays, found
 
 
-def convex_hull(points, aux_indices=None, need_connections=False, need_equations=False):
+def convex_hull(points, aux_indices=[], need_connections=False, need_equations=False):
     def generate_vertex_index_mapping(hull):
         vertrex_index = hull.vertices
         n_points = hull.npoints
@@ -106,8 +107,9 @@ def convex_hull(points, aux_indices=None, need_connections=False, need_equations
         connections = generate_connections_v1(hull, aux_indices=aux_indices)
 
     if need_equations:
+        # produce equation such that Ax < = b
         A = hull.equations[:, :-1]
-        b = hull.equations[:, -1]
+        b = -hull.equations[:, -1]
         equations = {"A": A, 'b': b}
 
     hull_vertices = Vertices(vertices=new_vertices, connections=connections, equations=equations)
