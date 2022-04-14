@@ -135,6 +135,15 @@ def gen_standard_connection(n):
     return connections
 
 
+def isInteger(point):
+    integer_flag = True
+    for x in point:
+        if not (isEqual(A=x % 1, B=0) or isEqual(A=x % 1, B=1)):
+            integer_flag = False
+            break
+    return integer_flag
+
+
 def compute_x_req(vertices_y):
     if isinstance(vertices_y, Vertices):
         vertices_y = vertices_y.vertices
@@ -167,6 +176,7 @@ def req_2_simplex(x_req, X):
 def req_cut(x_req):
     from convex_hull_algs import convex_hull
     N = x_req.shape[0]
+
     vertices = [x_req]
     for i in range(N):
         cut_vertex = deepcopy(x_req)
@@ -181,12 +191,17 @@ def req_cut(x_req):
 
 
 def generate_x_req_set(vertices_y: Vertices, X):
+    degenerate = False
     x_req = compute_x_req(vertices_y)
-    if X is not None:
-        x_req_vertices = req_2_simplex(x_req, X)
+    if np.sum(x_req) == len(vertices_y.vertices[0]):
+        degenerate = True
+        return None, degenerate
     else:
-        x_req_vertices = req_cut(x_req)
-    return x_req_vertices
+        if X is not None:
+            x_req_vertices = req_2_simplex(x_req, X)
+        else:
+            x_req_vertices = req_cut(x_req)
+        return x_req_vertices, degenerate
 
 
 def compute_y_req_v1(vertices_x: Vertices, eta=0.2):

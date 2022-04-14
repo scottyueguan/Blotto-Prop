@@ -1,8 +1,10 @@
 import numpy as np
-from utils import Vertices, generate_x_req_set, compare_vertices
-from convex_hull_algs import convex_hull, con2vert
+from utils import Vertices, generate_x_req_set, compare_vertices, isSamePoint, isInteger
+from convex_hull_algs import convex_hull, con2vert, isInHull
 from copy import deepcopy
 from typing import List
+from graph_generators import generate_graph
+from tqdm import tqdm
 
 
 class QProp:
@@ -12,6 +14,8 @@ class QProp:
         self.reverse_connectivity = np.array(connectivity).T
         self.N = len(self.connectivity)
         self.T = T
+
+        self.degenerate_flag = False
 
         self.neighbor_nodes = self._generate_neighbor_nodes()
 
@@ -24,37 +28,73 @@ class QProp:
     def __len__(self):
         return len(self.Q_flow)
 
+    def _degenerate(self):
+        self.degenerate_flag = True
+        print("Degenerate case, requires Defender resource on all nodes.")
+
     def backprop(self):
-        Q_k = []
-        for i in range(self.N):
-            neighbor_nodes_i = self.neighbor_nodes[i]
+        if self.degenerate_flag:
+            pass
+        else:
+            Q_k = []
+            info = dict()
+            fraction_flag = False
+
             reverse_reachable_set_list = []
-            for neighbor_node in neighbor_nodes_i:
-                neighbor_q_set = self.Q_flow[-1][neighbor_node]
-                reverse_reachable_set = self.generate_reachable_set(neighbor_q_set.vertices, reverse=True)
-                reverse_reachable_set_list.append(reverse_reachable_set)
+            for i in tqdm(range(self.N)):
+                if not self.degenerate_flag:
+                    neighbor_q_set = self.Q_flow[-1][i]
+                    reverse_reachable_set = self.generate_reachable_set(neighbor_q_set.vertices, reverse=True)
+                    reverse_reachable_set_list.append(reverse_reachable_set)
 
-            constraints_A = [reverse_reachable_set.equations["A"] for reverse_reachable_set
-                             in reverse_reachable_set_list]
-            constraints_b = [reverse_reachable_set.equations["b"] for reverse_reachable_set
-                             in reverse_reachable_set_list]
+            for i in tqdm(range(self.N)):
+                if not self.degenerate_flag:
+                    neighbor_nodes_i = self.neighbor_nodes[i]
 
-            constraints_A.append(self.Preq_list[i].equations["A"])
-            constraints_b.append(self.Preq_list[i].equations["b"])
+                    constraints_A = [reverse_reachable_set_list[neighbor_node].equations["A"]
+                                     for neighbor_node in neighbor_nodes_i]
+                    constraints_b = [reverse_reachable_set_list[neighbor_node].equations["b"]
+                                     for neighbor_node in neighbor_nodes_i]
 
-            new_A = np.concatenate(tuple(constraints_A), axis=0)
-            new_b = np.concatenate(tuple(constraints_b), axis=0)
+                    constraints_A.append(self.Preq_list[i].equations["A"])
+                    constraints_b.append(self.Preq_list[i].equations["b"])
 
-            vertices, rays, found = con2vert(new_A, new_b)
-            assert found
-            Q_k.append(vertices)
+                    new_A = np.concatenate(tuple(constraints_A), axis=0)
+                    new_b = np.concatenate(tuple(constraints_b), axis=0)
 
-        self.Q_flow.append(Q_k)
+                    vertices, rays, found = con2vert(new_A, new_b)
+                    assert found
+
+                    for vertex in vertices:
+                        if not isInteger(vertex):
+                            print(vertex)
+                            fraction_flag = True
+
+                    Q_k.append(vertices)
+
+            self.Q_flow.append(Q_k)
+
+            info["fraction"] = fraction_flag
+
+            return info
 
     def multi_stage_prop(self, steps):
         step = 0
-        while step < steps and (self.__len__() < 2 or (self.__len__() >= 2 and not self.isConsistent())):
-            self.backprop()
+        fraction_flag = False
+
+        if self.degenerate_flag:
+            return False
+
+        print("Starting back prop...")
+        while step < steps and not self.degenerate_flag \
+                and (self.__len__() < 2 or (self.__len__() >= 2 and not self.isConsistent())):
+            print("{} step out of {} steps".format(step, steps))
+            info = self.backprop()
+            step += 1
+            if info["fraction"]:
+                fraction_flag = True
+
+        return fraction_flag
 
     def isConsistent(self):
         consistent_flag = True
@@ -70,8 +110,11 @@ class QProp:
         extreme_attacker_reachable_vertices = self._generate_extreme_attacker_reachable_vertices()
         for i in range(self.N):
             y_vertices = extreme_attacker_reachable_vertices[i]
-            Preq_i = generate_x_req_set(vertices_y=y_vertices, X=None)
+            Preq_i, degenerate = generate_x_req_set(vertices_y=y_vertices, X=None)
             Preq_list.append(Preq_i)
+            if degenerate:
+                self._degenerate()
+                return None
         return Preq_list
 
     def _generate_extreme_attacker_reachable_vertices(self):
@@ -106,6 +149,10 @@ class QProp:
         for extreme_actions in extreme_actions:
             for x_point in x_points:
                 new_vertices.append(np.matmul(x_point, extreme_actions))
+
+        if all([abs(np.sum(vertex) - self.N) < 1e-10 for vertex in new_vertices]):
+            self._degenerate()
+            return None
 
         polytope, success = convex_hull(new_vertices, need_equations=True)
         assert success
@@ -150,23 +197,41 @@ class QProp:
 
 
 if __name__ == "__main__":
-    connectivity = np.array([[1, 1, 0, 0, 1],
-                             [0, 1, 1, 1, 0],
-                             [0, 0, 1, 1, 0],
-                             [0, 0, 1, 1, 1],
-                             [1, 0, 0, 0, 1]])
+    # connectivity = np.array([[1, 1, 0, 0, 1],
+    #                          [0, 1, 1, 1, 0],
+    #                          [0, 0, 1, 1, 0],
+    #                          [0, 0, 1, 1, 1],
+    #                          [1, 0, 0, 0, 1]])
+
+    connectivity = generate_graph(type="random", size=8, self_loop=False, undirected=False)
+
+    # connectivity = np.array([[1, 0, 0, 1, 0, 0],
+    #                          [1, 0, 0, 0, 0, 0],
+    #                          [0, 0, 1, 0, 0, 0],
+    #                          [0, 0, 0, 1, 1, 0],
+    #                          [0, 0, 0, 0, 1, 1],
+    #                          [1, 0, 0, 0, 1, 0]])
+
+    # connectivity = np.array([[0, 0, 1, 1, 0, 1],
+    #                          [0, 0, 0, 0, 1, 1],
+    #                          [0, 1, 1, 0, 1, 0],
+    #                          [1, 0, 0, 0, 1, 0],
+    #                          [0, 1, 1, 0, 1, 0],
+    #                          [1, 0, 0, 0, 1, 1]])
+
+    print(connectivity)
 
     q_prop = QProp(connectivity=connectivity)
-    q_prop.multi_stage_prop(10)
+    fraction_flag = q_prop.multi_stage_prop(steps=10)
 
-    for t in range(len(q_prop)):
-        alpha_min_t = []
-        for i in range(connectivity.shape[0]):
-            alpha_i = []
-            for vertex in q_prop.Q_flow[t][i].vertices:
-                alpha_i.append(np.sum(vertex))
-            alpha_i_min = np.min(alpha_i)
-            alpha_min_t.append(alpha_i_min)
-        print(alpha_min_t)
+    # for t in range(len(q_prop)):
+    #     alpha_min_t = []
+    #     for i in range(connectivity.shape[0]):
+    #         alpha_i = []
+    #         for vertex in q_prop.Q_flow[t][i].vertices:
+    #             alpha_i.append(np.sum(vertex))
+    #         alpha_i_min = np.min(alpha_i)
+    #         alpha_min_t.append(alpha_i_min)
+    #     print(alpha_min_t)
 
     print("done!")
