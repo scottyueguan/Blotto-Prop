@@ -3,13 +3,15 @@ from utils import Vertices, generate_x_req_set, compare_vertices, isSamePoint, i
 from convex_hull_algs import convex_hull, con2vert, isInHull
 from copy import deepcopy
 from typing import List
-from graph_generators import generate_graph
+from graph_generators import generate_graph, Graph
 from tqdm import tqdm
 
 
 class QProp:
-    def __init__(self, connectivity, T=50, resolution=0.2, eps=0, hull_method="aux_point",
+    def __init__(self, graph: Graph, T=50, resolution=0.2, eps=0, hull_method="aux_point",
                  need_connections=False):
+        self.graph = graph
+        connectivity = deepcopy(graph.connectivity)
         self.connectivity = connectivity
         self.reverse_connectivity = np.array(connectivity).T
         self.N = len(self.connectivity)
@@ -103,6 +105,8 @@ class QProp:
             if not compare_vertices(vertices_new, vertices_old):
                 consistent_flag = False
                 break
+        if consistent_flag:
+            print("Fixed point found!")
         return consistent_flag
 
     def _generate_Preq(self):
@@ -203,7 +207,7 @@ if __name__ == "__main__":
     #                          [0, 0, 1, 1, 1],
     #                          [1, 0, 0, 0, 1]])
 
-    connectivity = generate_graph(type="random", size=8, self_loop=False, undirected=False)
+    graph = generate_graph(type="random", size=6, self_loop=False, undirected=False)
 
     # connectivity = np.array([[1, 0, 0, 1, 0, 0],
     #                          [1, 0, 0, 0, 0, 0],
@@ -219,19 +223,18 @@ if __name__ == "__main__":
     #                          [0, 1, 1, 0, 1, 0],
     #                          [1, 0, 0, 0, 1, 1]])
 
-    print(connectivity)
+    graph.visualize_graph()
 
-    q_prop = QProp(connectivity=connectivity)
+    q_prop = QProp(graph=graph)
     fraction_flag = q_prop.multi_stage_prop(steps=10)
-
-    # for t in range(len(q_prop)):
-    #     alpha_min_t = []
-    #     for i in range(connectivity.shape[0]):
-    #         alpha_i = []
-    #         for vertex in q_prop.Q_flow[t][i].vertices:
-    #             alpha_i.append(np.sum(vertex))
-    #         alpha_i_min = np.min(alpha_i)
-    #         alpha_min_t.append(alpha_i_min)
-    #     print(alpha_min_t)
+    for t in range(len(q_prop)):
+        alpha_min_t = []
+        for i in range(graph.connectivity.shape[0]):
+            alpha_i = []
+            for vertex in q_prop.Q_flow[t][i].vertices:
+                alpha_i.append(np.sum(vertex))
+            alpha_i_min = np.min(alpha_i)
+            alpha_min_t.append(np.round_(alpha_i_min, decimals=2))
+        print(alpha_min_t)
 
     print("done!")
