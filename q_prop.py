@@ -207,7 +207,7 @@ if __name__ == "__main__":
     #                          [0, 0, 1, 1, 1],
     #                          [1, 0, 0, 0, 1]])
 
-    graph = generate_graph(type="random", size=6, self_loop=False, undirected=False)
+    graph = generate_graph(type="random", size=6, self_loop=True, undirected=True)
 
     # connectivity = np.array([[1, 0, 0, 1, 0, 0],
     #                          [1, 0, 0, 0, 0, 0],
