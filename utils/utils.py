@@ -181,7 +181,7 @@ def req_cut(x_req):
     for i in range(N):
         cut_vertex = deepcopy(x_req)
         cut_vertex[i] = 0
-        cut_vertex[i] = N - np.sum(cut_vertex)
+        cut_vertex[i] = N - np.sum(cut_vertex) + 5
         vertices.append(cut_vertex)
 
     polytope, success = convex_hull(points=vertices, need_connections=True, need_equations=True)

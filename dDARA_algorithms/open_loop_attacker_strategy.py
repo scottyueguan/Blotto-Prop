@@ -1,8 +1,8 @@
 import numpy as np
 from blotto_prop import BlottoProp
 from environments import Environment, generate_env_from_name
-from utils import generate_mesh_over_simplex, random_sample_over_simplex
-from utils import compute_x_req, req_2_simplex, isEqual
+from utils.utils import generate_mesh_over_simplex, random_sample_over_simplex
+from utils.utils import compute_x_req, req_2_simplex, isEqual
 from convex_hull_algs import intersect
 from copy import deepcopy
 

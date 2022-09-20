@@ -1,7 +1,6 @@
 import numpy as np
 from environments import generate_env_from_name
 from blotto_prop import BlottoProp
-from utils import isEqual
 
 env_name = "figure-4"
 env = generate_env_from_name(env_name)

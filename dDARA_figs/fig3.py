@@ -2,11 +2,11 @@ from environments import generate_env_from_name
 from blotto_prop import BlottoProp
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import generate_x_req_set
+from utils.utils import generate_x_req_set
 from convex_hull_algs import intersect
 from copy import deepcopy
 import os
-from utils import FIG_PATH
+from utils.utils import FIG_PATH
 
 x0 = np.array([7, 2, 1])
 y0 = np.array([2, 1, 1])

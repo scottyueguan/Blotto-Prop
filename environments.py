@@ -25,7 +25,6 @@ class Environment:
     def get_dimension_Y(self):
         return self.connectivity_Y.shape[0]
 
-
 def generate_env_from_name(name: str):
     if name == 'figure-4':
         connectivity = np.array([[1, 1, 0, 0, 1],

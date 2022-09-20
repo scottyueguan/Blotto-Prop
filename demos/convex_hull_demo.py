@@ -1,4 +1,4 @@
-from utils import Vertices
+from utils.utils import Vertices
 import matplotlib.pyplot as plt
 import numpy as np
 from convex_hull_algs import remove_non_vertex_auxPoint

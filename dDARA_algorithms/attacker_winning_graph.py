@@ -3,11 +3,10 @@ from blotto_prop import BlottoProp
 from environments import Environment, generate_env_from_name
 from find_C2C import compute_C2C_time
 from copy import deepcopy
-from convex_hull_algs import isInHull, intersect
-from utils import generate_x_req_set
+from convex_hull_algs import intersect
+from utils.utils import generate_x_req_set
 from tqdm import tqdm
-from utils import generate_mesh_over_simplex, random_sample_over_simplex
-from concurrent.futures import *
+from utils.utils import generate_mesh_over_simplex, random_sample_over_simplex
 
 
 # TODO: Implement multi-thread

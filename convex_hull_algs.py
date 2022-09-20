@@ -3,7 +3,7 @@ from scipy.spatial import ConvexHull
 from operator import itemgetter
 import itertools
 import cdd
-from utils import isSingleton_eps, Vertices
+from utils.utils import isSingleton_eps, Vertices
 from copy import deepcopy
 
 

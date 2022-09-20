@@ -83,7 +83,9 @@ def random_graph_generator(size, self_loop=False, undirected=False):
     return connectivity.astype(int)
 
 
-def generate_graph(type: str, size: int, **kwargs):
+def generate_graph(connectivity_matrix, type: str, size: int, **kwargs):
+    if connectivity_matrix is not None:
+        return Graph(connectivity_matrix)
     if type == "ring":
         connectivity = ring_graph_generator(size, **kwargs)
         graph = Graph(connectivity)

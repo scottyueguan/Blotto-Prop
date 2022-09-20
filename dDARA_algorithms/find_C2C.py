@@ -3,7 +3,7 @@ from blotto_prop import BlottoProp
 from convex_hull_algs import isInHull
 from copy import deepcopy
 from environments import Environment, generate_env_from_name
-from utils import isEqual
+from utils.utils import isEqual
 
 
 def compute_C2C_time(env: Environment, x_s, x_g, role):

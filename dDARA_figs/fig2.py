@@ -3,7 +3,7 @@ from blotto_prop import BlottoProp
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from utils import FIG_PATH
+from utils.utils import FIG_PATH
 
 x0 = np.array([7, 2, 1])
 

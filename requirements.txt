@@ -3,6 +3,6 @@ numpy
 scipy
 shapely
 tqdm
-pycddlib
-gurobi
+pycddlib==2.1.4
+gurobipy
 networkx

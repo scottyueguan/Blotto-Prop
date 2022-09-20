@@ -1,7 +1,4 @@
-from convex_hull_algs import convex_hull, remove_non_vertex_auxPoint, con2vert, intersect
 import numpy as np
-from utils import Vertices, gen_standard_connection
-import matplotlib.pyplot as plt
 
 # points = [np.array([0.0, 1.0, 0]), np.array([0, 0.8, 0.2]), np.array([0, 0, 1])]
 #

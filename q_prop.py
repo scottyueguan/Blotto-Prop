@@ -1,5 +1,5 @@
 import numpy as np
-from utils import Vertices, generate_x_req_set, compare_vertices, isSamePoint, isInteger
+from utils.utils import Vertices, generate_x_req_set, compare_vertices, isSamePoint, isInteger
 from convex_hull_algs import convex_hull, con2vert, isInHull
 from copy import deepcopy
 from typing import List
@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 class QProp:
     def __init__(self, graph: Graph, T=50, resolution=0.2, eps=0, hull_method="aux_point",
-                 need_connections=False):
+                 need_connections=False, check_N_degenerate=False):
         self.graph = graph
         connectivity = deepcopy(graph.connectivity)
         self.connectivity = connectivity
@@ -18,6 +18,7 @@ class QProp:
         self.T = T
 
         self.degenerate_flag = False
+        self.check_N_degenerate = check_N_degenerate
 
         self.neighbor_nodes = self._generate_neighbor_nodes()
 
@@ -154,7 +155,7 @@ class QProp:
             for x_point in x_points:
                 new_vertices.append(np.matmul(x_point, extreme_actions))
 
-        if all([abs(np.sum(vertex) - self.N) < 1e-10 for vertex in new_vertices]):
+        if all([abs(np.sum(vertex) - self.N) < 1e-10 for vertex in new_vertices]) and self.check_N_degenerate:
             self._degenerate()
             return None
 
@@ -207,7 +208,9 @@ if __name__ == "__main__":
     #                          [0, 0, 1, 1, 1],
     #                          [1, 0, 0, 0, 1]])
 
-    graph = generate_graph(type="random", size=6, self_loop=True, undirected=True)
+    connectivity = np.array([[0, 0, 1],
+                             [1, 0, 1],
+                             [0, 1, 0]])
 
     # connectivity = np.array([[1, 0, 0, 1, 0, 0],
     #                          [1, 0, 0, 0, 0, 0],
@@ -223,7 +226,9 @@ if __name__ == "__main__":
     #                          [0, 1, 1, 0, 1, 0],
     #                          [1, 0, 0, 0, 1, 1]])
 
-    graph.visualize_graph()
+    # graph = generate_graph(connectivity_matrix=None, type="random", size=6, self_loop=True, undirected=True)
+    graph = generate_graph(connectivity_matrix=connectivity, type="random", size=6, self_loop=True, undirected=True)
+    # graph.visualize_graph()
 
     q_prop = QProp(graph=graph)
     fraction_flag = q_prop.multi_stage_prop(steps=10)
@@ -236,5 +241,8 @@ if __name__ == "__main__":
             alpha_i_min = np.min(alpha_i)
             alpha_min_t.append(np.round_(alpha_i_min, decimals=2))
         print(alpha_min_t)
+
+    i = 0
+
 
     print("done!")
