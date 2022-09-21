@@ -60,4 +60,8 @@ if __name__ == "__main__":
             ax = fig.add_subplot(3, len(q_prop), len(q_prop) * i + t + 1, projection='3d')
             plot_polyhedron(vertices=q_prop.Q_flow[t][i].vertices, ax=ax, color=colors[i])
 
+    for i in range(len(q_prop.Q_flow[3][2].vertices)):
+        diff = np.linalg.norm(q_prop.Q_flow[5][2].vertices[i] - q_prop.Q_flow[4][2].vertices[i])
+        print(diff)
+
     plt.show()

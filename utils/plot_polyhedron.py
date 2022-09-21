@@ -23,7 +23,7 @@ def simplify(triangles):
         for jj, b in enumerate(triangles):
             if (ii < jj):  # test relationships only in one way as adjacency and co-planarity are bijective
                 if is_adjacent(a, b):
-                    if is_coplanar(a, b, np.pi / 180.):
+                    if is_coplanar(a, b, np.pi / 90.):
                         G.add_edge(ii, jj)
 
     # triangles that belong to a connected component can be combined
@@ -93,6 +93,7 @@ def get_distance(v1, v2):
 
 def plot_polyhedron(vertices, ax, color, ax_lim=8):
     verts = np.array(vertices)
+    verts = np.around(verts, decimals=5)
     hull = ConvexHull(verts)
     faces = hull.simplices
 
@@ -112,7 +113,8 @@ def plot_polyhedron(vertices, ax, color, ax_lim=8):
         ]
         triangles.append(sq)
 
-    new_faces = simplify(triangles)
+    new_faces_ = simplify(triangles)
+    new_faces = [list(new_face) for new_face in new_faces_]
     for sq in new_faces:
         f = a3.art3d.Poly3DCollection([sq])
         f.set_color(color)
@@ -121,3 +123,14 @@ def plot_polyhedron(vertices, ax, color, ax_lim=8):
         ax.add_collection3d(f)
 
     ax.scatter(verts[:, 0], verts[:, 1], verts[:, 2], marker='o', color=color)
+
+
+if __name__ == "__main__":
+    import numpy as np
+    from numpy import array
+    vertices = [array([2., 1., 0.]), array([1., 1., 1.]), array([0., 2., 1.]), array([0., 3., 0.]), array([1., 1., 6.]), array([0., 2., 6.]), array([0., 8., 0.]), array([7., 1., 0.])]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    plot_polyhedron(vertices=vertices, ax=ax, color='b')
+    plt.show()

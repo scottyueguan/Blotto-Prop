@@ -6,3 +6,4 @@ tqdm
 pycddlib==2.1.4
 gurobipy
 networkx
+sympy
