@@ -227,7 +227,7 @@ if __name__ == "__main__":
     #                          [1, 0, 0, 0, 1, 1]])
 
     # graph = generate_graph(connectivity_matrix=None, type="random", size=6, self_loop=True, undirected=True)
-    graph = generate_graph(connectivity_matrix=connectivity, type="random", size=6, self_loop=True, undirected=True)
+    graph = generate_graph(connectivity_matrix=connectivity, type=None, size=6, self_loop=True, undirected=True)
     # graph.visualize_graph()
 
     q_prop = QProp(graph=graph)

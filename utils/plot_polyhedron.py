@@ -124,6 +124,7 @@ def plot_polyhedron(vertices, ax, color, ax_lim=8):
 
     ax.scatter(verts[:, 0], verts[:, 1], verts[:, 2], marker='o', color=color)
 
+    return new_faces
 
 if __name__ == "__main__":
     import numpy as np

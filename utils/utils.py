@@ -173,7 +173,7 @@ def req_2_simplex(x_req, X):
     return polytope
 
 
-def req_cut(x_req, max_surplus=5):
+def req_cut(x_req, max_surplus=30):
     from convex_hull_algs import convex_hull
     N = x_req.shape[0]
 
