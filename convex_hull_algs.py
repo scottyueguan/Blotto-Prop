@@ -28,7 +28,7 @@ def con2vert(A, b):
     for i in range(len(ext)):
         element = ext[i]
         if element[0] == 1:
-            vertices.append(np.array(element[1:]))
+            vertices.append(np.round(np.array(element[1:]), decimals=5))
         else:
             rays.append(np.array(element[1:]))
     return Vertices(vertices=vertices), rays, found

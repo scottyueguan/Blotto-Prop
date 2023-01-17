@@ -8,10 +8,8 @@ from tqdm import tqdm
 
 
 class QProp:
-    def __init__(self, graph: Graph, T=50, resolution=0.2, eps=0, hull_method="aux_point",
+    def __init__(self, connectivity, T=50, resolution=0.2, eps=0, hull_method="aux_point",
                  need_connections=False, check_N_degenerate=False):
-        self.graph = graph
-        connectivity = deepcopy(graph.connectivity)
         self.connectivity = connectivity
         self.reverse_connectivity = np.array(connectivity).T
         self.N = len(self.connectivity)
@@ -70,9 +68,8 @@ class QProp:
 
                     for vertex in vertices:
                         if not isInteger(vertex):
-                            print(vertex)
+                            # print(vertex)
                             fraction_flag = True
-
                     Q_k.append(vertices)
 
             self.Q_flow.append(Q_k)
@@ -208,10 +205,9 @@ if __name__ == "__main__":
     #                          [0, 0, 1, 1, 1],
     #                          [1, 0, 0, 0, 1]])
 
-    connectivity = np.array([[0, 0, 1],
-                             [1, 0, 1],
-                             [0, 1, 0]])
-
+    # connectivity = np.array([[0, 0, 1],
+    #                          [1, 0, 1],
+    #                          [0, 1, 0]])
     # connectivity = np.array([[1, 0, 0, 1, 0, 0],
     #                          [1, 0, 0, 0, 0, 0],
     #                          [0, 0, 1, 0, 0, 0],
@@ -219,22 +215,29 @@ if __name__ == "__main__":
     #                          [0, 0, 0, 0, 1, 1],
     #                          [1, 0, 0, 0, 1, 0]])
 
-    # connectivity = np.array([[0, 0, 1, 1, 0, 1],
-    #                          [0, 0, 0, 0, 1, 1],
-    #                          [0, 1, array([1, 0, 1, 0],
-    #                          [1, 0, 0, 0, 1, 0],
-    #                          [0, 1, 1, 0, 1, 0],
-    #                          [1, 0, 0, 0, 1, 1]])
+    connectivity = np.array([[0, 0, 1, 1, 0, 1],
+                             [0, 0, 0, 0, 1, 1],
+                             [0, 1, 1, 0, 1, 0],
+                             [1, 0, 0, 0, 1, 0],
+                             [0, 1, 1, 0, 1, 0],
+                             [1, 0, 0, 0, 1, 1]])
+
+    # #ACC 5-node example
+    # connectivity = np.array([[1, 1, 0, 0, 1],
+    #                          [0, 1, 1, 1, 0],
+    #                          [0, 0, 1, 1, 0],
+    #                          [0, 0, 1, 1, 1],
+    #                          [1, 0, 0, 0, 1]])
 
     # graph = generate_graph(connectivity_matrix=None, type="random", size=6, self_loop=True, undirected=True)
-    graph = generate_graph(connectivity_matrix=connectivity, type=None, size=6, self_loop=True, undirected=True)
+    # graph = generate_graph(connectivity_matrix=connectivity, type=None, size=6, self_loop=True, undirected=True)
     # graph.visualize_graph()
 
-    q_prop = QProp(graph=graph)
+    q_prop = QProp(connectivity=connectivity)
     fraction_flag = q_prop.multi_stage_prop(steps=10)
     for t in range(len(q_prop)):
         alpha_min_t = []
-        for i in range(graph.connectivity.shape[0]):
+        for i in range(connectivity.shape[0]):
             alpha_i = []
             for vertex in q_prop.Q_flow[t][i].vertices:
                 alpha_i.append(np.sum(vertex))
