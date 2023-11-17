@@ -3,7 +3,7 @@ from blotto_prop import BlottoProp
 import matplotlib.pyplot as plt
 from copy import deepcopy
 from environments import generate_env_from_name, Environment
-from utils import generate_x_req_set, Vertices
+from utils.utils import generate_x_req_set, Vertices
 from convex_hull_algs import intersect
 
 

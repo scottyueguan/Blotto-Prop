@@ -38,14 +38,19 @@ from utils.plot_polyhedron import plot_polyhedron
 
 
 if __name__ == "__main__":
-    connectivity = np.array([[0, 0, 1],
-                             [1, 0, 1],
-                             [0, 1, 0]])
+    # connectivity = np.array([[0, 0, 1],
+    #                          [1, 0, 1],
+    #                          [0, 1, 0]])
 
     # connectivity = np.array([[1, 1, 0],
     #                          [0, 1, 1],
     #                          [1, 0, 1]])
-    graph = generate_graph(connectivity_matrix=connectivity, type="random", size=6, self_loop=True, undirected=True)
+
+    connectivity = np.array([[1, 0, 0],
+                             [1, 0, 0],
+                             [0, 1, 1]])
+
+    graph = generate_graph(connectivity_matrix=connectivity, type="None", size=6, self_loop=True, undirected=True)
     # graph.visualize_graph()
 
     # Q-prop

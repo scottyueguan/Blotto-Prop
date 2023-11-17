@@ -5,7 +5,7 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d
 from operator import itemgetter
 from shapely.geometry import Polygon
 from copy import deepcopy
-from utils import Vertices, isEqual, isSamePoint, remove_duplicated_points
+from utils.utils import Vertices, isEqual, isSamePoint, remove_duplicated_points
 import itertools
 from convex_hull_algs import remove_non_vertex_auxPoint, remove_non_vertex_analytic
 import warnings

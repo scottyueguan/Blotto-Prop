@@ -2,7 +2,10 @@ import numpy as np
 from scipy.spatial import ConvexHull
 from operator import itemgetter
 import itertools
-import cdd
+try:
+    import cdd
+except:
+    pass
 from utils.utils import isSingleton_eps, Vertices
 from copy import deepcopy
 
