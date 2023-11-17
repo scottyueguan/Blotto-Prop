@@ -7,24 +7,20 @@ from utils.plot_polyhedron import plot_polyhedron
 
 
 if __name__ == "__main__":
-    # connectivity = np.array([[0, 0, 1],
-    #                          [1, 0, 1],
-    #                          [0, 1, 0]])
+    connectivity = np.array([[1, 0, 0],
+                             [1, 0, 0],
+                             [0, 1, 1]])
 
-    # connectivity = np.array([[1, 1, 0],
-    #                          [0, 1, 1],
-    #                          [1, 0, 1]])
     graph = generate_graph(connectivity_matrix=connectivity, type="random", size=6, self_loop=True, undirected=True)
-    # graph.visualize_graph()
 
     # Q-prop
     q_prop = QProp(graph=graph)
-    fraction_flag = q_prop.multi_stage_prop(steps=10)
-
+    fraction_flag = q_prop.multi_stage_prop(steps=5)
+    T = len(q_prop)
     # create canvas
     fig = plt.figure()
 
-    q_set_face_array = np.zeros((6, 3, 6, 5, 3)) - 1
+    q_set_face_array = np.zeros((T, 3, 6, 5, 3)) - 1
     # plot Q-sets
     colors = ['b', 'y', 'g']
     for t in range(len(q_prop)):
@@ -38,6 +34,6 @@ if __name__ == "__main__":
                     q_set_face_array[t, i, j, k, :] = point
 
     mdict = {"data": q_set_face_array}
-    io.savemat("3_node_q_prop_example.mat", mdict=mdict)
+    io.savemat("sink_q_prop_example.mat", mdict=mdict)
 
     plt.show()
